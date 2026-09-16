@@ -16,6 +16,7 @@ import {
   loadCloudAnalytics,
   loadLeads,
   migrateLocalDataToSupabase,
+  exportSupabaseSql,
   saveLead,
   testSupabaseConnection,
   type SupabaseConnectionStatus,
@@ -737,6 +738,13 @@ function SeoModal({ onClose }: ModalProps) {
             className="rounded-lg border border-neutral-300 px-3 py-2 text-xs font-bold"
           >
             Chọn favicon
+          </button>
+          <button
+            type="button"
+            onClick={() => exportSupabaseSql(config)}
+            className="mb-3 rounded-lg border border-neutral-700 px-3 py-2 text-xs font-bold text-neutral-700"
+          >
+            Xuất SQL cấu hình Supabase
           </button>
         </div>
       </Field>
