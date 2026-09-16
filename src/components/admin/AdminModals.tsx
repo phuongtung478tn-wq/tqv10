@@ -1660,7 +1660,7 @@ function StorageModal({ onClose }: ModalProps) {
           </button>
           {testing !== null && (
             <p
-              className={`text-xs font-semibold ${testing ? "text-emerald-600" : "text-red-600"}`}
+              className={`text-xs font-semibold ${testing.ok && testing.schemaReady ? "text-emerald-600" : testing.ok ? "text-amber-600" : "text-red-600"}`}
             >
               {testing.ok && testing.schemaReady
                 ? "Kết nối và schema Supabase đã sẵn sàng."
