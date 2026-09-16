@@ -679,16 +679,43 @@ async function syncConfigToSupabase(config: SiteConfig): Promise<void> {
   }
 }
 
+export type SupabaseConnectionStatus =
+  | { ok: true; schemaReady: true }
+  | { ok: true; schemaReady: false; reason: "missing_schema" }
+  | { ok: false; reason: "invalid_url" | "unauthorized" | "network" };
+
 export async function testSupabaseConnection(
   url: string,
   key: string,
-): Promise<boolean> {
+): Promise<SupabaseConnectionStatus> {
+  const normalizedUrl = url.trim().replace(/\/$/, "");
+  const normalizedKey = key.trim();
+  if (!/^https:\/\/[^/]+\.supabase\.co$/i.test(normalizedUrl)) {
+    return { ok: false, reason: "invalid_url" };
+  }
+  if (!normalizedKey) return { ok: false, reason: "unauthorized" };
   try {
-    const res = await fetch(`${url.replace(/\/$/, "")}/rest/v1/`, {
-      headers: { apikey: key, Authorization: `Bearer ${key}` },
-    });
-    return res.ok || res.status === 404; // 404 = reachable but no root resource
+    const res = await fetch(
+      `${normalizedUrl}/rest/v1/${CLOUD_CONFIG_TABLE}?select=id&limit=1`,
+      {
+        headers: {
+          apikey: normalizedKey,
+          Authorization: `Bearer ${normalizedKey}`,
+        },
+      },
+    );
+    if (res.ok) return { ok: true, schemaReady: true };
+    if (res.status === 404) {
+      const body = await res.text().catch(() => "");
+      if (body.includes("PGRST205")) {
+        return { ok: true, schemaReady: false, reason: "missing_schema" };
+      }
+    }
+    if (res.status === 401 || res.status === 403) {
+      return { ok: false, reason: "unauthorized" };
+    }
+    return { ok: false, reason: "network" };
   } catch {
-    return false;
+    return { ok: false, reason: "network" };
   }
 }

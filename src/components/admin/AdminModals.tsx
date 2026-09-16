@@ -16,6 +16,7 @@ import {
   loadLeads,
   saveLead,
   testSupabaseConnection,
+  type SupabaseConnectionStatus,
   type AnalyticsState,
   type LeadRecord,
 } from "@/services/dataAdapter";
@@ -1604,7 +1605,7 @@ function LeadsModal({ onClose }: ModalProps) {
 function StorageModal({ onClose }: ModalProps) {
   const { config, update } = useSiteConfig();
   const a = config.admin;
-  const [testing, setTesting] = useState<null | boolean>(null);
+  const [testing, setTesting] = useState<SupabaseConnectionStatus | null>(null);
   return (
     <AdminModal
       title="Storage Mode"
@@ -1661,9 +1662,15 @@ function StorageModal({ onClose }: ModalProps) {
             <p
               className={`text-xs font-semibold ${testing ? "text-emerald-600" : "text-red-600"}`}
             >
-              {testing
-                ? "Kết nối thành công."
-                : "Không kết nối được. Kiểm tra lại URL/Key."}
+              {testing.ok && testing.schemaReady
+                ? "Kết nối và schema Supabase đã sẵn sàng."
+                : testing.ok
+                  ? "Đã kết nối Supabase, nhưng chưa có schema. Hãy chạy supabase/funnel_configs.sql và supabase/visitor_tracking.sql trong SQL Editor."
+                  : testing.reason === "unauthorized"
+                    ? "URL tới được nhưng key không được Supabase chấp nhận. Hãy dùng publishable/anon key đúng project."
+                    : testing.reason === "invalid_url"
+                      ? "URL Supabase không đúng định dạng https://<project>.supabase.co."
+                      : "Không thể kết nối Supabase. Kiểm tra mạng, URL và CORS."}
             </p>
           )}
         </>
