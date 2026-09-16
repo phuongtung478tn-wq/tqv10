@@ -15,11 +15,8 @@ import {
   Search,
   KeyRound,
   Save,
-  Package,
-  Upload,
   Eye,
   EyeOff,
-  RotateCcw,
   LogOut,
   Pencil,
   Palette,
@@ -91,7 +88,6 @@ const TOOL_GROUPS: ToolGroup[] = [
       { key: "analytics", label: "Analytics", icon: BarChart3 },
       { key: "seo", label: "SEO Google", icon: Search },
       { key: "webmaster", label: "Webmaster & Scripts", icon: Globe },
-      { key: "storage", label: "Storage Mode", icon: Database },
     ],
   },
   {
@@ -134,10 +130,9 @@ export function AdminBar() {
     previewEnabled,
     setPreviewEnabled,
   } = useAdmin();
-  const { save, reset, exportFile, importConfig, dirty } = useSiteConfig();
+  const { save, dirty } = useSiteConfig();
   const [hidden, setHidden] = useState(true);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
-  const configInputRef = useRef<HTMLInputElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setHidden(isDevicePreview()), []);
@@ -157,20 +152,6 @@ export function AdminBar() {
       document.removeEventListener("keydown", onKey);
     };
   }, [openGroup]);
-
-  function handleImportConfig(file: File) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const ok = importConfig(String(reader.result));
-      window.alert(
-        ok
-          ? "Đã nhập và lưu cấu hình thành công."
-          : "File cấu hình không hợp lệ hoặc thiếu trường bắt buộc.",
-      );
-    };
-    reader.onerror = () => window.alert("Không thể đọc file cấu hình.");
-    reader.readAsText(file);
-  }
 
   if (hidden || !authed) return null;
 
@@ -357,52 +338,6 @@ export function AdminBar() {
                   title="Khôi phục kích thước mặc định"
                 >
                   Mặc định
-                </button>
-              </div>
-              <div className="border-t border-white/10 pt-1">
-                <p className="px-1 py-1 text-[10px] font-bold uppercase tracking-wide text-white/40">
-                  Cấu hình
-                </p>
-                <button
-                  onClick={() => {
-                    setOpenGroup(null);
-                    exportFile();
-                  }}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-xs font-medium text-white/80 hover:bg-white/10 hover:text-white"
-                >
-                  <Package className="h-4 w-4" /> Xuất config
-                </button>
-                <input
-                  ref={configInputRef}
-                  type="file"
-                  accept="application/json,.json,.js"
-                  className="hidden"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) handleImportConfig(file);
-                    event.target.value = "";
-                  }}
-                />
-                <button
-                  onClick={() => configInputRef.current?.click()}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-xs font-medium text-white/80 hover:bg-white/10 hover:text-white"
-                >
-                  <Upload className="h-4 w-4" /> Nhập config
-                </button>
-                <button
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        "Khôi phục cấu hình gốc? Mọi thay đổi đã lưu sẽ mất.",
-                      )
-                    ) {
-                      setOpenGroup(null);
-                      reset();
-                    }
-                  }}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-xs font-medium text-red-300 hover:bg-red-500/15"
-                >
-                  <RotateCcw className="h-4 w-4" /> Khôi phục gốc
                 </button>
               </div>
             </div>
