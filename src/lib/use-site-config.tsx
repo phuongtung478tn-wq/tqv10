@@ -32,6 +32,7 @@ interface SiteConfigContextValue {
   /** Nạp cấu hình từ nội dung file đã tải lên; trả về false nếu file không hợp lệ. */
   importConfig: (raw: string) => boolean;
   dirty: boolean;
+  ready: boolean;
 }
 
 const SiteConfigContext = createContext<SiteConfigContextValue | null>(null);
@@ -39,14 +40,17 @@ const SiteConfigContext = createContext<SiteConfigContextValue | null>(null);
 export function SiteConfigProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<SiteConfig>(DEFAULT_CONFIG);
   const [dirty, setDirty] = useState(false);
+  const [ready, setReady] = useState(false);
 
   // Hydrate từ storage sau khi mount (tránh mismatch SSR).
   useEffect(() => {
     const localConfig = loadConfig();
     setConfig(localConfig);
-    void loadCloudConfig(localConfig).then((cloudConfig) => {
-      if (cloudConfig) setConfig(cloudConfig);
-    });
+    void loadCloudConfig(localConfig)
+      .then((cloudConfig) => {
+        if (cloudConfig) setConfig(cloudConfig);
+      })
+      .finally(() => setReady(true));
   }, []);
 
   const update = useCallback((patch: (draft: SiteConfig) => void) => {
@@ -105,6 +109,7 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
       exportFile,
       importConfig,
       dirty,
+      ready,
     }),
     [
       config,
@@ -115,6 +120,7 @@ export function SiteConfigProvider({ children }: { children: ReactNode }) {
       exportFile,
       importConfig,
       dirty,
+      ready,
     ],
   );
 

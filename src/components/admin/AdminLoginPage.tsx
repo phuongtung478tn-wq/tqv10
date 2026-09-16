@@ -1,5 +1,5 @@
 import { Lock } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { useAdmin } from "@/lib/use-admin";
 import { useSiteConfig } from "@/lib/use-site-config";
@@ -7,15 +7,10 @@ import { useSiteConfig } from "@/lib/use-site-config";
 /** Màn hình đăng nhập quản trị — dùng cho /admin và đường dẫn tuỳ chỉnh. */
 export function AdminLoginPage() {
   const { authed, login } = useAdmin();
-  const { config } = useSiteConfig();
-  const [ready, setReady] = useState(false);
+  const { config, ready: configReady } = useSiteConfig();
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
   const passwordInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setReady(true);
-  }, []);
 
   function handleSubmit() {
     const nextPassword = passwordInputRef.current?.value ?? password;
@@ -71,10 +66,10 @@ export function AdminLoginPage() {
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={!ready}
+              disabled={!configReady}
               className="w-full rounded-lg bg-white py-2.5 text-sm font-bold text-neutral-900 transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
             >
-              Đăng nhập
+              {configReady ? "Đăng nhập" : "Đang tải cấu hình..."}
             </button>
             <p className="text-center text-[11px] text-white/40">
               Đổi mật khẩu &amp; đường dẫn trong công cụ “Đổi Link Admin”.
