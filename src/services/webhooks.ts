@@ -151,29 +151,25 @@ async function postOne(
         detail: "URL không hợp lệ hoặc không dùng HTTPS",
       };
 
-    // In-app browser thường chặn CORS tới Make/Sheets. Ưu tiên relay cùng
-    // origin; nếu app đang chạy static hosting thì fallback về client fetch.
-    if (ep.type !== "supabase") {
-      try {
-        const relay = await Promise.race([
-          relayWebhook({
-            data: { endpoint, body: body as Record<string, unknown> },
-          }),
-          new Promise<null>((resolve) =>
-            window.setTimeout(() => resolve(null), TIMEOUT_MS),
-          ),
-        ]);
-        if (relay?.ok) {
-          return {
-            label: ep.label || ep.type,
-            ok: true,
-            attempts: 1,
-            detail: "server_relay",
-          };
-        }
-      } catch {
-        // Static build/server function unavailable: use direct request below.
+    // In-app browser thường chặn CORS tới Make/Sheets/Supabase. Ưu tiên relay
+    // cùng origin; nếu app đang chạy static hosting thì fallback về client fetch.
+    try {
+      const relay = await Promise.race([
+        relayWebhook({ data: { endpoint, body, headers } }),
+        new Promise<null>((resolve) =>
+          window.setTimeout(() => resolve(null), TIMEOUT_MS),
+        ),
+      ]);
+      if (relay?.ok) {
+        return {
+          label: ep.label || ep.type,
+          ok: true,
+          attempts: 1,
+          detail: "server_relay",
+        };
       }
+    } catch {
+      // Static build/server function unavailable: use direct request below.
     }
 
     const result = await requestWithRetry(endpoint, {

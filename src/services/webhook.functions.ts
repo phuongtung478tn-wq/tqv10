@@ -3,7 +3,8 @@ import { z } from "zod";
 
 const relaySchema = z.object({
   endpoint: z.string().url(),
-  body: z.record(z.string(), z.unknown()),
+  body: z.unknown(),
+  headers: z.record(z.string(), z.string()).optional(),
 });
 
 function isAllowedEndpoint(value: string) {
@@ -25,7 +26,10 @@ export const relayWebhook = createServerFn({ method: "POST" })
     try {
       const response = await fetch(data.endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...data.headers,
+        },
         body: JSON.stringify(data.body),
       });
       return {

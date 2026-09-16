@@ -32,15 +32,18 @@ npm run build    # tạo bản build production
    - `RESEND_API_KEY` — nếu bật Auto Email.
 4. Bấm **Deploy**. Xong.
 
+> Form lead, CRM cloud và webhook relay cần deployment có SSR như Vercel.
+> Không dùng bản static cho production nếu cần nhận lead tập trung.
+
 Ưu điểm: Server Function `sendLeadEmail` chạy được, không lộ API key ra trình duyệt.
 
 ---
 
 ## B. Deploy bản tĩnh lên cPanel / DirectAdmin / VPS Nginx
 
-> Lưu ý: bản tĩnh **không** chạy được Server Function gửi email.
-> Hãy dùng **Webhook Hub** (Make/Zapier/Telegram/Sheets) trong Admin để nhận lead
-> và để dịch vụ ngoài gửi email thay thế.
+> Lưu ý: bản tĩnh **không** chạy được Server Function gửi email, relay webhook
+> hoặc relay CRM. In-app browser có thể chặn request trực tiếp tới webhook.
+> Khuyến nghị dùng Vercel SSR cho production.
 
 1. Build:
 

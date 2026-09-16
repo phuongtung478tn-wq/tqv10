@@ -255,6 +255,7 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
       const sessionSource = utmSource();
       // Hub UTM: dữ liệu attribution sạch, luôn an toàn (không throw)
       const utmData = getUtmPayload("last");
+      const trackedSource = utmData.utm_source || sessionSource || "direct";
       const variant = getVariant(config.abTest.enabled, config.abTest.split);
       const { behavior, assessment, visitorBehaviorPayload } =
         buildVisitorBehaviorPayload(
@@ -266,7 +267,7 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
           sessionSource,
         );
       const { score: aiScore, rank: aiRank } = assessment;
-      const source = behavior.utm_source || sessionSource;
+      const source = trackedSource;
 
       const payload = {
         full_name: name.slice(0, 100),
@@ -287,9 +288,9 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
         risk_reasons: assessment.reasons,
         recommended_action: assessment.recommendedAction,
         utm_source: source,
-        utm_medium: behavior.utm_medium,
-        utm_campaign: behavior.utm_campaign,
-        utm_content: behavior.utm_content,
+        utm_medium: utmData.utm_medium || behavior.utm_medium,
+        utm_campaign: utmData.utm_campaign || behavior.utm_campaign,
+        utm_content: utmData.utm_content || behavior.utm_content,
         utm_term: behavior.utm_term || utmData["utm_term"] || "",
         ttclid: behavior.ttclid || utmData["ttclid"] || "",
         fbclid: utmData["fbclid"] || "",
@@ -385,10 +386,17 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
         leadSaved = true;
         return saved;
       });
-      const [, delivery] = await Promise.all([
+      const [savedLead, delivery] = await Promise.all([
         savePromise,
         dispatchLead(config, payload),
       ]);
+      if (
+        config.admin.storageMode === "database" &&
+        savedLead.storage !== "database"
+      ) {
+        throw new Error("CRM cloud delivery failed");
+      }
+      if (!delivery.ok) throw new Error("Webhook delivery failed");
       if (delivery.failedCount && delivery.failedCount > 0) {
         const failed = delivery.results
           .filter((result) => !result.ok)

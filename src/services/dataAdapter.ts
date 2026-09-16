@@ -12,6 +12,7 @@ import {
   type StorageMode,
 } from "@/config/site-config";
 import type { VisitorBehaviorPayload } from "@/types/visitor-tracking";
+import { relayWebhook } from "@/services/webhook.functions";
 
 const CONFIG_KEY = "funnel_site_config_v1";
 const LEADS_KEY = "funnel_leads_v1";
@@ -519,6 +520,11 @@ async function pushLeadToSupabase(
       visitor_behavior_payload: lead.visitorBehaviorPayload ?? null,
       created_at: lead.at,
     };
+    const relay = await relayWebhook({
+      data: { endpoint, body: [row], headers },
+    });
+    if (relay.ok) return true;
+
     const res = await fetch(endpoint, {
       method: "POST",
       headers,
