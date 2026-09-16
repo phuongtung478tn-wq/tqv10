@@ -10,6 +10,7 @@ import {
 } from "@/lib/behavior";
 import { getVariant, utmSource } from "@/lib/ab";
 import { getUtmPayload } from "@/lib/utm-hub";
+import { UtmHiddenFields } from "@/components/UtmHiddenFields";
 import { useSiteConfig } from "@/lib/use-site-config";
 import { dispatchLead } from "@/services/webhooks";
 import {
@@ -447,7 +448,7 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
     } catch (err) {
       console.error("Lead submit failed:", err);
       setError(
-        "Có lỗi khi gửi thông tin. Vui lòng kiểm tra kết nối và thử gửi lại.",
+        "Có lỗi khi gửi thông tin. Vui lòng kiểm tra kết nối v�� thử gửi lại.",
       );
       setStatus("error");
       toast.error("Gửi chưa thành công", {
@@ -509,6 +510,11 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
           aria-hidden="true"
           className="absolute left-[-9999px] h-0 w-0 opacity-0"
         />
+        {/* Hub UTM Catch-All: nhét TOÀN BỘ tham số thu gom được vào các
+            <input type="hidden"> để nếu form submit theo kiểu HTML POST truyền
+            thống (kể cả khi bị in-app browser chặn JS), backend vẫn nhận đủ
+            100% "vết tích" của đường link. */}
+        <UtmHiddenFields model="last" />
         <input
           required
           maxLength={100}
