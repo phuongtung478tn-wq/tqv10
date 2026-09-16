@@ -26,7 +26,15 @@ create table if not exists public.leads (
   utm_medium text,
   utm_campaign text,
   utm_content text,
+  utm_term text,
+  fbclid text,
   ttclid text,
+  gclid text,
+  raw_query text,
+  referrer text,
+  attribution_model text,
+  attribution_detected_by text,
+  utm_params jsonb,
   variant text,
   landing_url text,
   device_manufacturer text,
@@ -36,6 +44,16 @@ create table if not exists public.leads (
   browser text,
   visitor_behavior_payload jsonb
 );
+
+alter table public.leads
+  add column if not exists utm_term text,
+  add column if not exists fbclid text,
+  add column if not exists gclid text,
+  add column if not exists raw_query text,
+  add column if not exists referrer text,
+  add column if not exists attribution_model text,
+  add column if not exists attribution_detected_by text,
+  add column if not exists utm_params jsonb;
 
 create index if not exists leads_phone_created_idx
   on public.leads (phone, created_at desc);

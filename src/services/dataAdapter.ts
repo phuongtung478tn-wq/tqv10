@@ -228,7 +228,15 @@ export interface LeadRecord {
   utmMedium?: string | undefined;
   utmCampaign?: string | undefined;
   utmContent?: string | undefined;
+  utmTerm?: string | undefined;
+  fbclid?: string | undefined;
   ttclid?: string | undefined;
+  gclid?: string | undefined;
+  rawQuery?: string | undefined;
+  referrer?: string | undefined;
+  attributionModel?: string | undefined;
+  attributionDetectedBy?: string | undefined;
+  utmParams?: Record<string, string> | undefined;
   utmSource?: string | undefined;
   variant?: string | undefined;
   landing_url?: string | undefined;
@@ -249,6 +257,20 @@ export function loadLeads(): LeadRecord[] {
     ) as LeadRecord[];
   } catch {
     return [];
+  }
+}
+
+function cacheLeadLocally(record: LeadRecord): void {
+  if (!isBrowser()) return;
+  try {
+    const leads = loadLeads();
+    leads.unshift(record);
+    window.localStorage.setItem(LEADS_KEY, JSON.stringify(leads.slice(0, 500)));
+    window.dispatchEvent(
+      new CustomEvent<LeadRecord>(LEAD_CREATED_EVENT, { detail: record }),
+    );
+  } catch {
+    // Private/in-app browsers may block storage; remote delivery must continue.
   }
 }
 
@@ -291,7 +313,10 @@ export async function isDuplicateLeadRemote(
     const rows = (await res.json()) as unknown[];
     return Array.isArray(rows) && rows.length > 0;
   } catch (err) {
-    console.warn("isDuplicateLeadRemote: network error, allowing submit", (err as Error).message);
+    console.warn(
+      "isDuplicateLeadRemote: network error, allowing submit",
+      (err as Error).message,
+    );
     return false;
   }
 }
@@ -324,14 +349,7 @@ export async function saveLead(
     );
     if (!ok) record.storage = "local";
   }
-  if (isBrowser()) {
-    const leads = loadLeads();
-    leads.unshift(record);
-    window.localStorage.setItem(LEADS_KEY, JSON.stringify(leads.slice(0, 500)));
-    window.dispatchEvent(
-      new CustomEvent<LeadRecord>(LEAD_CREATED_EVENT, { detail: record }),
-    );
-  }
+  cacheLeadLocally(record);
   return record;
 }
 
@@ -374,7 +392,15 @@ async function pushLeadToSupabase(
           utm_medium: lead.utmMedium ?? null,
           utm_campaign: lead.utmCampaign ?? null,
           utm_content: lead.utmContent ?? null,
+          utm_term: lead.utmTerm ?? null,
+          fbclid: lead.fbclid ?? null,
           ttclid: lead.ttclid ?? null,
+          gclid: lead.gclid ?? null,
+          raw_query: lead.rawQuery ?? null,
+          referrer: lead.referrer ?? null,
+          attribution_model: lead.attributionModel ?? null,
+          attribution_detected_by: lead.attributionDetectedBy ?? null,
+          utm_params: lead.utmParams ?? null,
           variant: lead.variant ?? null,
           landing_url: lead.landing_url ?? null,
           device_manufacturer: lead.deviceManufacturer ?? null,
@@ -384,7 +410,7 @@ async function pushLeadToSupabase(
           browser: lead.browser ?? null,
           visitor_behavior_payload: lead.visitorBehaviorPayload ?? null,
           created_at: lead.at,
-          },
+        },
       ]),
     });
     return res.ok;
