@@ -273,14 +273,14 @@ export function AdminBar() {
           })}
         </div>
 
-        {/* Kích thước khung xem trước + cấu hình gom vào 1 biểu tượng */}
+        {/* Điều khiển kích thước khung xem trước */}
         <div className="relative shrink-0">
           <button
             onClick={() => toggleGroup("settings")}
             aria-expanded={openGroup === "settings"}
             aria-haspopup="menu"
-            aria-label="Kích thước khung xem trước và cấu hình"
-            title="Kích thước khung xem trước & cấu hình"
+            aria-label="Kích thước khung xem trước"
+            title="Kích thước khung xem trước"
             className={`${ICON_BUTTON} ${
               openGroup === "settings"
                 ? "bg-white text-neutral-900"
