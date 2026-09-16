@@ -2099,6 +2099,10 @@ function UtmModal({ onClose }: ModalProps) {
 function CronModal({ onClose }: ModalProps) {
   const { config, update } = useSiteConfig();
   const a = config.admin;
+  const databaseReady = a.storageMode === "database" && Boolean(a.supabaseUrl);
+  const scheduleReady =
+    a.cronSchedule === "off" ||
+    (databaseReady && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.backupEmail));
   return (
     <AdminModal
       title="Cloud Cron & Backup"
@@ -2135,6 +2139,15 @@ function CronModal({ onClose }: ModalProps) {
         Mode. Ở Local Mode, mỗi lần LƯU sẽ tạo snapshot backup tự động (giữ 10
         bản gần nhất).
       </p>
+      {a.cronSchedule !== "off" && (
+        <p
+          className={`mt-2 text-xs font-semibold ${scheduleReady ? "text-amber-600" : "text-red-600"}`}
+        >
+          {scheduleReady
+            ? "Đã có cấu hình lịch/email. Cần triển khai Supabase Edge Function hoặc API backup để lịch thực sự gửi email."
+            : "Chưa đủ cấu hình: cần Database Mode, Supabase URL và email nhận backup hợp lệ."}
+        </p>
+      )}
       <SaveHint />
     </AdminModal>
   );
