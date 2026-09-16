@@ -1,23 +1,22 @@
-import { n as __toESM } from "../_runtime.mjs";
+import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-hZzAbtud.mjs";
+import { g as Link } from "../_libs/@tanstack/react-router+[...].mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { c as isDuplicateLead, d as saveLead, h as useSiteConfig, p as trackConversion, r as LEAD_CREATED_EVENT, u as loadLeads } from "./use-site-config-DjShPvKg.mjs";
-import { A as GraduationCap, G as Activity, H as CalendarDays, L as Cpu, S as Menu, h as Phone, n as Wifi, r as Users, t as X, w as MapPin, x as MessageCircle, y as MousePointerClick, z as Clock } from "../_libs/lucide-react.mjs";
-import { n as ScarcityBar, t as ContentSection } from "./ContentSection-BWsPqEdY.mjs";
-import { g as Link } from "../_libs/@tanstack/react-router+[...].mjs";
+import { S as useSiteConfig, b as trackConversion, d as isDuplicateLead, f as isDuplicateLeadRemote, h as loadLeads, r as LEAD_CREATED_EVENT, v as saveLead } from "./use-site-config-DOhv-5qs.mjs";
+import { E as GraduationCap, L as CalendarDays, P as Clock, g as MousePointerClick, n as Users, p as Phone, t as X, v as MessageCircle, y as Menu } from "../_libs/lucide-react.mjs";
+import { n as ScarcityBar, t as ContentSection } from "./ContentSection--qi-6Kti.mjs";
 import { a as DialogOverlay, c as DialogTrigger, i as DialogDescription, n as DialogClose, o as DialogPortal, r as DialogContent, s as DialogTitle, t as Dialog } from "../_libs/@radix-ui/react-dialog+[...].mjs";
-import { d as trackLead, f as utmSource, i as getVariant, l as trackFormStart, n as dispatchLead, o as sendLeadEmail } from "./ab-CgpnHV5s.mjs";
+import { a as getUtm, f as trackFormStart, h as utmSource, l as sendLeadEmail, m as trackLead, o as getUtmPayload, r as dispatchLead, s as getVariant } from "./ab-CjZgG4e6.mjs";
 import { n as toast, t as Toaster } from "../_libs/sonner.mjs";
 import { n as clsx, t as cva } from "../_libs/class-variance-authority+clsx.mjs";
 import { t as twMerge } from "../_libs/tailwind-merge.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-Dd_BKtuj.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-zs6AdtTN.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var expert_1_default = "/assets/expert-1-CcX0y7YN.webp";
 var expert_2_default = "/assets/expert-2-WVJni1up.webp";
 var expert_3_default = "/assets/expert-3-AK2LvN4J.webp";
 var VISITOR_ID_KEY = "lp_visitor_id_v2";
-var ATTRIBUTION_KEY = "lp_utm_v2";
 var COUNTERS_KEY = "lp_visit_counters_v2";
 var SUBMISSION_KEY = "lp_submission_counters_v2";
 var SESSION_MARKER_KEY = "lp_session_marker_v2";
@@ -71,8 +70,13 @@ var runtime = {
 	faqClicked: "",
 	copiedTextType: "",
 	isCopyPaste: false,
-	startBatteryLevel: null,
-	currentBatteryLevel: null,
+	scrollVelocity: 0,
+	maxScrollVelocity: 0,
+	scrollBackCount: 0,
+	lastScrollY: 0,
+	lastScrollTime: 0,
+	deviceMemory: null,
+	hardwareConcurrency: null,
 	sectionTime: {},
 	visibleSections: {},
 	visitorId: "",
@@ -88,7 +92,6 @@ var runtime = {
 	options: {}
 };
 var listeners = /* @__PURE__ */ new Set();
-/** Tăng mỗi lần dữ liệu theo dõi thay đổi để cache snapshot biết làm mới. */
 var snapshotVersion = 0;
 function isBrowser() {
 	return typeof window !== "undefined";
@@ -325,7 +328,24 @@ function detectDeviceProfile() {
 }
 function detectHeadlessBrowser() {
 	if (!isBrowser()) return false;
-	return Boolean(navigator.webdriver || /HeadlessChrome|Puppeteer|Playwright|PhantomJS/i.test(navigator.userAgent) || navigator.languages && navigator.languages.length === 0);
+	const nav = navigator;
+	let score = 0;
+	if (nav.webdriver) score += 1;
+	if (/HeadlessChrome|Puppeteer|Playwright|PhantomJS/i.test(navigator.userAgent)) score += 1;
+	if (navigator.languages && navigator.languages.length === 0) score += 1;
+	if (window.outerWidth === 0 && window.outerHeight === 0) score += 1;
+	try {
+		const gl = document.createElement("canvas").getContext("webgl");
+		if (gl) {
+			const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+			const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "";
+			if (/SwiftShader|llvmpipe|Headless|VirtualBox/i.test(String(renderer))) score += 1;
+		}
+	} catch {}
+	try {
+		if (!navigator.permissions) score += 1;
+	} catch {}
+	return score >= 2;
 }
 function getVisitorId() {
 	if (!isBrowser()) return "visitor-ssr";
@@ -339,29 +359,26 @@ function getVisitorId() {
 		return makeId("visitor");
 	}
 }
+/**
+* Attribution lấy từ Hub UTM (src/lib/utm-hub.ts) — nơi duy nhất đọc URL,
+* quy đổi mã nền tảng và lưu first-touch/last-touch.
+*/
 function readAttribution() {
 	if (!isBrowser()) return defaultAttribution;
-	const stored = readJSON(ATTRIBUTION_KEY, {});
-	const params = new URLSearchParams(window.location.search);
-	const pick = (key) => params.get(key) || stored[key] || "";
-	const attribution = {
-		source: pick("utm_source"),
-		medium: pick("utm_medium"),
-		campaign: pick("utm_campaign"),
-		content: pick("utm_content"),
-		term: pick("utm_term"),
-		ttclid: pick("ttclid"),
-		landingUrl: window.location.href.split("#")[0] ?? window.location.href
-	};
-	if (params.toString()) writeJSON(ATTRIBUTION_KEY, {
-		utm_source: attribution.source,
-		utm_medium: attribution.medium,
-		utm_campaign: attribution.campaign,
-		utm_content: attribution.content,
-		utm_term: attribution.term,
-		ttclid: attribution.ttclid
-	});
-	return attribution;
+	try {
+		const utm = getUtm("last");
+		return {
+			source: utm.utm_source,
+			medium: utm.utm_medium,
+			campaign: utm.utm_campaign,
+			content: utm.utm_content,
+			term: utm.utm_term,
+			ttclid: utm.click_ids["ttclid"] || "",
+			landingUrl: utm.landing_url || (window.location.href.split("#")[0] ?? window.location.href)
+		};
+	} catch {
+		return defaultAttribution;
+	}
 }
 function computeMetrics() {
 	const now = isBrowser() ? Date.now() : runtime.startedAt;
@@ -369,12 +386,14 @@ function computeMetrics() {
 	const timeToFirstInteractionSeconds = runtime.firstInteractionAt ? Math.max(0, Math.round((runtime.firstInteractionAt - runtime.startedAt) / 1e3)) : 0;
 	const formFillDurationSeconds = runtime.formStartedAt ? Math.max(0, Math.round((now - runtime.formStartedAt) / 1e3)) : 0;
 	const focusSection = Object.entries(runtime.sectionTime).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
-	const batteryDrain = runtime.startBatteryLevel != null && runtime.currentBatteryLevel != null ? Math.max(0, runtime.startBatteryLevel - runtime.currentBatteryLevel) : 0;
 	return {
 		timeOnPageSeconds,
 		timeToFirstInteractionSeconds,
 		formFillDurationSeconds,
 		scrollDepthPercent: runtime.maxScrollPercent,
+		scrollVelocity: runtime.scrollVelocity,
+		maxScrollVelocity: runtime.maxScrollVelocity,
+		scrollBackCount: runtime.scrollBackCount,
 		industrySwitchCount: Math.max(0, runtime.industrySwitchCount - 1),
 		focusSection,
 		faqClicked: runtime.faqClicked,
@@ -382,9 +401,8 @@ function computeMetrics() {
 		isCopyPaste: runtime.isCopyPaste,
 		isHeadlessBrowser: detectHeadlessBrowser(),
 		submissionCountSameVisitor: 0,
-		startBatteryLevel: runtime.startBatteryLevel,
-		currentBatteryLevel: runtime.currentBatteryLevel,
-		batteryDrain,
+		deviceMemory: runtime.deviceMemory,
+		hardwareConcurrency: runtime.hardwareConcurrency,
 		sessionCounts: runtime.sessionCounts
 	};
 }
@@ -399,11 +417,6 @@ function buildSnapshot() {
 		initialized: runtime.initialized
 	};
 }
-/**
-* Snapshot được cache theo `snapshotVersion` (tăng mỗi lần emit) để
-* useSyncExternalStore luôn nhận cùng một tham chiếu giữa hai lần thay đổi —
-* nếu không React sẽ render lặp vô hạn.
-*/
 var cachedSnapshot = null;
 var cachedVersion = -1;
 function getSnapshot() {
@@ -433,12 +446,14 @@ function readLocalSessionCounts(isNewSession) {
 		month: {
 			key: monthKey(),
 			count: 0
-		}
+		},
+		totalSessions: 0
 	});
 	const nextDay = stored.day.key === dayKey() ? stored.day.count : 0;
 	const nextMonth = stored.month.key === monthKey() ? stored.month.count : 0;
 	const dayCount = isNewSession ? nextDay + 1 : Math.max(1, nextDay);
 	const monthCount = isNewSession ? nextMonth + 1 : Math.max(1, nextMonth);
+	const totalSessions = isNewSession ? (stored.totalSessions || 0) + 1 : Math.max(1, stored.totalSessions || 1);
 	writeJSON(COUNTERS_KEY, {
 		day: {
 			key: dayKey(),
@@ -447,10 +462,11 @@ function readLocalSessionCounts(isNewSession) {
 		month: {
 			key: monthKey(),
 			count: monthCount
-		}
+		},
+		totalSessions
 	});
 	return {
-		currentSession: 1,
+		currentSession: totalSessions,
 		today: dayCount,
 		month: monthCount
 	};
@@ -460,41 +476,61 @@ async function fetchRemoteSessionCounts(options, visitorId, sessionId, isNewSess
 	const base = options.supabaseUrl.replace(/\/$/, "");
 	const headers = {
 		"Content-Type": "application/json",
-		apikey: options.supabaseAnonKey
+		apikey: options.supabaseAnonKey,
+		Authorization: `Bearer ${options.supabaseAnonKey}`
 	};
+	const controller = new AbortController();
+	const timer = window.setTimeout(() => controller.abort(), NETWORK_TIMEOUT_MS);
 	try {
-		if (isNewSession) await fetch(`${base}/rest/v1/${VISITOR_SESSION_TABLE}`, {
-			method: "POST",
-			headers: {
-				...headers,
-				Prefer: "resolution=ignore-duplicates,return=minimal"
-			},
-			body: JSON.stringify([{
-				id: sessionId,
-				visitor_id: visitorId,
-				visited_day: dayKey(),
-				visited_month: monthKey(),
-				source: attribution.source || null,
-				medium: attribution.medium || null,
-				campaign: attribution.campaign || null,
-				content: attribution.content || null,
-				device_model: device.model,
-				device_kind: device.kind,
-				os: device.os,
-				browser: device.browser,
-				created_at: (/* @__PURE__ */ new Date()).toISOString()
-			}])
-		});
-		const [todayResponse, monthResponse] = await Promise.all([fetch(`${base}/rest/v1/${VISITOR_SESSION_TABLE}?visitor_id=eq.${encodeURIComponent(visitorId)}&visited_day=eq.${dayKey()}&select=id`, { headers }), fetch(`${base}/rest/v1/${VISITOR_SESSION_TABLE}?visitor_id=eq.${encodeURIComponent(visitorId)}&visited_month=eq.${monthKey()}&select=id`, { headers })]);
+		if (isNewSession) {
+			const sessionResponse = await fetch(`${base}/rest/v1/${VISITOR_SESSION_TABLE}`, {
+				method: "POST",
+				headers: {
+					...headers,
+					Prefer: "resolution=ignore-duplicates,return=minimal"
+				},
+				signal: controller.signal,
+				body: JSON.stringify([{
+					id: sessionId,
+					visitor_id: visitorId,
+					visited_day: dayKey(),
+					visited_month: monthKey(),
+					source: attribution.source || null,
+					medium: attribution.medium || null,
+					campaign: attribution.campaign || null,
+					content: attribution.content || null,
+					device_model: device.model,
+					device_kind: device.kind,
+					os: device.os,
+					browser: device.browser,
+					created_at: (/* @__PURE__ */ new Date()).toISOString()
+				}])
+			});
+			if (!sessionResponse.ok && sessionResponse.status !== 409) return;
+		}
+		const [todayResponse, monthResponse] = await Promise.all([fetch(`${base}/rest/v1/${VISITOR_SESSION_TABLE}?visitor_id=eq.${encodeURIComponent(visitorId)}&visited_day=eq.${dayKey()}&select=id`, {
+			headers,
+			signal: controller.signal
+		}), fetch(`${base}/rest/v1/${VISITOR_SESSION_TABLE}?visitor_id=eq.${encodeURIComponent(visitorId)}&visited_month=eq.${monthKey()}&select=id`, {
+			headers,
+			signal: controller.signal
+		})]);
 		if (!todayResponse.ok || !monthResponse.ok) return;
 		const [todayRows, monthRows] = await Promise.all([todayResponse.json(), monthResponse.json()]);
 		runtime.sessionCounts = {
-			currentSession: 1,
+			currentSession: runtime.sessionCounts.currentSession,
 			today: Array.isArray(todayRows) ? todayRows.length : runtime.sessionCounts.today,
 			month: Array.isArray(monthRows) ? monthRows.length : runtime.sessionCounts.month
 		};
 		updateSnapshot();
-	} catch {}
+	} catch {} finally {
+		window.clearTimeout(timer);
+	}
+}
+/** Đảm bảo phiên hiện tại được ghi khi người dùng submit, kể cả hydration trễ. */
+function syncCurrentVisitorSession(options) {
+	if (!runtime.initialized) return;
+	fetchRemoteSessionCounts(options, runtime.visitorId, runtime.sessionId, true, runtime.attribution, runtime.device);
 }
 async function refreshNetworkInfo() {
 	if (!isBrowser()) return;
@@ -545,11 +581,18 @@ async function refreshNetworkInfo() {
 	}
 	updateSnapshot();
 }
+function detectHardwareInfo() {
+	if (!isBrowser()) return;
+	const nav = navigator;
+	runtime.deviceMemory = typeof nav.deviceMemory === "number" ? nav.deviceMemory : null;
+	runtime.hardwareConcurrency = typeof nav.hardwareConcurrency === "number" ? nav.hardwareConcurrency : null;
+}
 function initVisitorTracking(options = {}) {
 	if (!isBrowser()) return () => {};
 	runtime.options = options;
 	if (runtime.initialized) {
-		fetchRemoteSessionCounts(runtime.options, runtime.visitorId, runtime.sessionId, false, runtime.attribution, runtime.device);
+		fetchRemoteSessionCounts(runtime.options, runtime.visitorId, runtime.sessionId, options.storageMode === "database", runtime.attribution, runtime.device);
+		runtime.options = options;
 		return runtime.cleanup || (() => {});
 	}
 	runtime.initialized = true;
@@ -561,6 +604,11 @@ function initVisitorTracking(options = {}) {
 	runtime.faqClicked = "";
 	runtime.copiedTextType = "";
 	runtime.isCopyPaste = false;
+	runtime.scrollVelocity = 0;
+	runtime.maxScrollVelocity = 0;
+	runtime.scrollBackCount = 0;
+	runtime.lastScrollY = 0;
+	runtime.lastScrollTime = 0;
 	runtime.sectionTime = {};
 	runtime.visibleSections = {};
 	runtime.visitorId = getVisitorId();
@@ -570,6 +618,7 @@ function initVisitorTracking(options = {}) {
 	runtime.device = detectDeviceProfile();
 	runtime.attribution = readAttribution();
 	runtime.sessionCounts = readLocalSessionCounts(isNewSession);
+	detectHardwareInfo();
 	runtime.network = {
 		...defaultNetwork,
 		connectionType: detectConnectionType(),
@@ -585,8 +634,20 @@ function initVisitorTracking(options = {}) {
 	const onScroll = () => {
 		markInteraction();
 		const total = document.documentElement.scrollHeight - window.innerHeight;
-		const percent = total > 0 ? Math.round((window.scrollY || 0) / total * 100) : 100;
+		const currentY = window.scrollY || 0;
+		const percent = total > 0 ? Math.round(currentY / total * 100) : 100;
 		runtime.maxScrollPercent = Math.max(runtime.maxScrollPercent, Math.min(100, percent));
+		const now = Date.now();
+		const dt = now - runtime.lastScrollTime;
+		if (dt > 0 && runtime.lastScrollTime > 0) {
+			const dy = Math.abs(currentY - runtime.lastScrollY);
+			const v = Math.round(dy / dt * 1e3);
+			runtime.scrollVelocity = v;
+			runtime.maxScrollVelocity = Math.max(runtime.maxScrollVelocity, v);
+			if (currentY < runtime.lastScrollY - 5) runtime.scrollBackCount += 1;
+		}
+		runtime.lastScrollY = currentY;
+		runtime.lastScrollTime = now;
 		updateSnapshot();
 	};
 	const events = [
@@ -616,15 +677,6 @@ function initVisitorTracking(options = {}) {
 		] });
 		document.querySelectorAll("[data-section]").forEach((element) => observer?.observe(element));
 	}
-	navigator.getBattery?.().then((battery) => {
-		runtime.startBatteryLevel = Math.round(battery.level * 100);
-		runtime.currentBatteryLevel = runtime.startBatteryLevel;
-		battery.addEventListener("levelchange", () => {
-			runtime.currentBatteryLevel = Math.round(battery.level * 100);
-			updateSnapshot();
-		});
-		updateSnapshot();
-	}).catch(() => {});
 	refreshNetworkInfo();
 	fetchRemoteSessionCounts(runtime.options, runtime.visitorId, runtime.sessionId, isNewSession, runtime.attribution, runtime.device);
 	runtime.cleanup = () => {
@@ -632,7 +684,7 @@ function initVisitorTracking(options = {}) {
 		window.clearInterval(tick);
 		observer?.disconnect();
 		runtime.initialized = false;
-		runtime.cleanup = void 0;
+		delete runtime.cleanup;
 	};
 	return runtime.cleanup;
 }
@@ -679,13 +731,16 @@ function collectBehavior(form) {
 		time_to_first_interaction_seconds: snapshot.metrics.timeToFirstInteractionSeconds,
 		form_fill_duration_seconds: snapshot.metrics.formFillDurationSeconds,
 		scroll_depth_percent: snapshot.metrics.scrollDepthPercent,
+		scroll_velocity: snapshot.metrics.scrollVelocity,
+		scroll_back_count: snapshot.metrics.scrollBackCount,
 		industry_switch_count: snapshot.metrics.industrySwitchCount,
 		focus_section: snapshot.metrics.focusSection,
 		faq_clicked: snapshot.metrics.faqClicked,
 		copied_text_type: snapshot.metrics.copiedTextType,
 		is_copy_paste: snapshot.metrics.isCopyPaste,
 		is_headless_browser: snapshot.metrics.isHeadlessBrowser,
-		submission_count_same_ip: submissionCount,
+		submission_count_same_visitor: submissionCount,
+		max_scroll_velocity: snapshot.metrics.maxScrollVelocity,
 		device_model_name: snapshot.device.model,
 		device_manufacturer: snapshot.device.manufacturer,
 		device_family: snapshot.device.family,
@@ -693,13 +748,13 @@ function collectBehavior(form) {
 		operating_system_version: snapshot.device.osVersion,
 		browser: snapshot.device.browserName,
 		browser_version: snapshot.device.browserVersion,
+		is_in_app_browser: snapshot.device.isInAppBrowser,
 		connection_type: snapshot.network.connectionType,
 		network_provider: snapshot.network.provider,
 		network_label: snapshot.network.displayLabel,
 		network_flags: snapshot.network.flags,
-		start_battery_level: snapshot.metrics.startBatteryLevel,
-		current_battery_level: snapshot.metrics.currentBatteryLevel,
-		battery_drain: snapshot.metrics.batteryDrain,
+		device_memory: snapshot.metrics.deviceMemory,
+		hardware_concurrency: snapshot.metrics.hardwareConcurrency,
 		client_ip: snapshot.network.ip,
 		location_city: snapshot.network.city,
 		location_region: snapshot.network.region,
@@ -720,6 +775,9 @@ function collectBehavior(form) {
 function initBehavior(options = {}) {
 	return initVisitorTracking(options);
 }
+function syncBehaviorSession(options) {
+	syncCurrentVisitorSession(options);
+}
 function scoreLead(data, cfg) {
 	if (cfg?.enabled === false) return {
 		score: 0,
@@ -735,9 +793,11 @@ function scoreLead(data, cfg) {
 	const locationMismatch = Boolean(data.location_city && data.form_city && !data.location_city.toLowerCase().includes(data.form_city.toLowerCase()) && !data.form_city.toLowerCase().includes(data.location_city.toLowerCase()));
 	if (data.is_headless_browser) reasons.push("Trình duyệt tự động/headless được nhận diện");
 	if (data.form_fill_duration_seconds > 0 && data.form_fill_duration_seconds < fastFill) reasons.push(`Thời gian điền form dưới ${fastFill} giây`);
-	if (data.submission_count_same_ip > 1) reasons.push(`Thiết bị đã ghi nhận ${data.submission_count_same_ip} lần gửi trong ngày`);
+	if (data.submission_count_same_visitor > 1) reasons.push(`Thiết bị đã ghi nhận ${data.submission_count_same_visitor} lần gửi trong ngày`);
 	if (locationMismatch && data.is_copy_paste) reasons.push("Khu vực mạng khác tỉnh khai báo kèm thao tác copy số điện thoại");
 	if (data.network_flags.length > 0) reasons.push(`Mạng có tín hiệu: ${data.network_flags.join(", ")}`);
+	if (data.max_scroll_velocity > 5e3) reasons.push(`Tốc độ cuộn ${data.max_scroll_velocity}px/s bất thường`);
+	if (data.scroll_back_count > 10) reasons.push(`Cuộn lên/xuống ${data.scroll_back_count} lần bất thường`);
 	if (data.is_headless_browser) return {
 		score: 5,
 		rank: "Bot / Ảo",
@@ -764,7 +824,7 @@ function scoreLead(data, cfg) {
 	if (data.focus_section === "luong_thuc_tap" || data.copied_text_type === "chi_phi") score += 5;
 	if (data.visits_today >= 2) score += 4;
 	score = Math.max(0, Math.min(100, score));
-	const riskLevel = data.submission_count_same_ip > 1 || locationMismatch && data.is_copy_paste || data.network_flags.includes("Tor") ? "high" : data.form_fill_duration_seconds > 0 && data.form_fill_duration_seconds < fastFill ? "review" : "low";
+	const riskLevel = data.submission_count_same_visitor > 1 || locationMismatch && data.is_copy_paste || data.network_flags.includes("Tor") || data.max_scroll_velocity > 8e3 ? "high" : data.form_fill_duration_seconds > 0 && data.form_fill_duration_seconds < fastFill ? "review" : "low";
 	return {
 		score,
 		rank: score >= 80 ? "VIP" : score >= 65 ? "Tiềm năng cao" : score >= 50 ? "Tiềm năng" : "Cần nuôi dưỡng",
@@ -773,89 +833,148 @@ function scoreLead(data, cfg) {
 		recommendedAction: riskLevel === "high" ? "Xác minh thủ công trước khi gửi báo giá hoặc chuyển sale" : riskLevel === "review" ? "Ưu tiên xác minh qua Zalo trước khi gọi" : "Gọi tư vấn theo kịch bản phù hợp nhu cầu"
 	};
 }
+var VIP_DEVICE_RE = /iPhone (12|13|14|15|16)|Galaxy S(22|23|24|25)|Fold|Flip|Pixel/i;
+var KEY_REGION_RE = /Nghệ An|Hà Tĩnh|Quảng Bình|Thanh Hóa|Quảng Ninh|Hải Phòng/i;
+/** Giờ Việt Nam (UTC+7) — dùng cho mọi nhánh thời gian bất kể múi giờ trình duyệt. */
+function vietnamHour() {
+	const now = /* @__PURE__ */ new Date();
+	const utc = now.getTime() + now.getTimezoneOffset() * 6e4;
+	return new Date(utc + 252e5).getHours();
+}
 function generateSaleAdvice(data, assessment = scoreLead(data)) {
-	if (assessment.riskLevel === "unrated") return `ℹ️ [CHƯA CHẤM AI] ${assessment.recommendedAction}.`;
-	if (assessment.riskLevel === "high") return `⚠️ [CẦN XÁC MINH] ${assessment.reasons.join("; ") || "Lead có tín hiệu bất thường"}. ${assessment.recommendedAction}.`;
-	if (assessment.riskLevel === "review") return `🟡 [TÍN HIỆU YẾU] ${assessment.reasons.join("; ") || "Cần xác minh thêm"}. ${assessment.recommendedAction}.`;
+	if (assessment.riskLevel === "unrated") return `[INFO] [Chưa chấm AI] ${assessment.recommendedAction}.`;
+	if (assessment.riskLevel === "high") return `[WARN] [Cần xác minh] ${assessment.reasons.length ? assessment.reasons.join("; ") : "Lead có tín hiệu bất thường"}. ${assessment.recommendedAction}.`;
+	if (assessment.riskLevel === "review") return `[REVIEW] [Tín hiệu yếu] ${assessment.reasons.length ? assessment.reasons.join("; ") : "Cần xác minh thêm"}. ${assessment.recommendedAction}.`;
 	const advice = [];
-	const isHighEndDevice = /iPhone (12|13|14|15|16)|Galaxy S(22|23|24|25)|Fold|Flip|Pixel/i.test(data.device_model_name);
-	const isKeyRegion = /Nghệ An|Hà Tĩnh|Quảng Bình|Thanh Hóa|Quảng Ninh|Hải Phòng/i.test(data.form_city);
-	const isNightTime = (() => {
-		const hour = (/* @__PURE__ */ new Date()).getHours();
-		return hour >= 22 || hour <= 6;
-	})();
+	const isHighEndDevice = VIP_DEVICE_RE.test(data.device_model_name);
+	const isKeyRegion = KEY_REGION_RE.test(data.form_city);
+	const hour = vietnamHour();
+	const isNightTime = hour >= 22 || hour <= 6;
+	const nganh = data.nganh_hoc || "chưa chọn ngành";
+	const faqAdvice = {
+		hoc_phi: ["[TIP] [Lo ngại học phí] Khách mở câu hỏi về học phí 0Đ — cần xác minh niềm tin.", "[=>] Giải thích rõ nguồn tài trợ từ doanh nghiệp Trung Quốc, liệt kê chi phí thực tế (hồ sơ, vé, sinh hoạt) và nhấn mạnh không thu phí trung gian."],
+		tieng_trung: ["[TIP] [Lo ngại ngôn ngữ] Khách quan tâm rào cản tiếng Trung và điều kiện đầu vào.", "[=>] Tư vấn ngắn, rõ: học từ 0, có lộ trình tiền HSK và hỗ trợ thích nghi trước khi bay."],
+		luong_thuc_tap: ["[TIP] [Quan tâm thu nhập] Khách mở câu hỏi về lương thực tập — cần con số cụ thể.", `[=>] Nêu mức 15-30 triệu/tháng theo ngành ${nganh}, giải thích ca làm, ký túc xá miễn phí và khả năng gửi tiền về nhà.`],
+		bang_cap: ["[TIP] [Quan tâm bằng cấp] Khách hỏi về giá trị bằng cấp và công nhận quốc tế.", "[=>] Nhấn mạnh bằng Cao đẳng chính quy, công nhận quốc tế, có thể ở lại làm việc hoặc học liên thông lên Đại học."],
+		thoi_gian: ["[TIP] [Quan tâm thời gian] Khách hỏi về lịch trình nhập học — có nhu cầu đi sớm.", "[=>] Nêu 2 kỳ nhập học (tháng 3 và tháng 9), thời gian 3-5 tháng từ đăng ký đến bay, và thời điểm đăng ký lý tưởng."],
+		nganh_hoc: ["[TIP] [Quan tâm ngành học] Khách hỏi ngành nào cần nhân lực nhất — đang phân vân lựa chọn.", "[=>] Giới thiệu 4 ngành hot nhất (ô tô điện, drone, IoT, logistics), so sánh thu nhập và cơ hội việc làm giữa các ngành."]
+	};
+	const faq = data.faq_clicked ? faqAdvice[data.faq_clicked] : void 0;
 	if (isHighEndDevice && data.time_on_page_seconds >= 80 && data.scroll_depth_percent >= 70) {
-		advice.push(`💡 [KHÁCH VIP] Thiết bị ${data.device_model_name}, đọc kỹ trang ${data.time_on_page_seconds}s và cuộn ${data.scroll_depth_percent}%.`);
-		advice.push(`👉 Tư vấn theo hướng phụ huynh quan tâm độ an toàn, lộ trình visa và đầu ra nghề nghiệp của ngành ${data.nganh_hoc}.`);
+		advice.push(`[TIP] [Khách VIP] Thiết bị ${data.device_model_name}, đọc kỹ trang ${data.time_on_page_seconds} giây và cuộn ${data.scroll_depth_percent}%.`);
+		advice.push(`[=>] Tư vấn theo hướng phụ huynh quan tâm độ an toàn, lộ trình visa và đầu ra nghề nghiệp của ngành ${nganh}.`);
+	} else if (faq) {
+		advice.push(faq[0]);
+		advice.push(faq[1]);
 	} else if (data.focus_section === "luong_thuc_tap" || data.copied_text_type === "chi_phi" || /cpc|paid|ads/i.test(data.utm_medium)) {
-		advice.push("💡 [KHÁCH QUAN TÂM TÀI CHÍNH] Tập trung vào thu nhập, chi phí và khả năng tự chủ tài chính.");
-		advice.push(`👉 Mở đầu bằng mức lương thực tập của ngành ${data.nganh_hoc}, rồi chốt bằng lộ trình học phí 0Đ và cơ hội việc làm sau tốt nghiệp.`);
-	} else if (data.faq_clicked === "tieng_trung") {
-		advice.push("💡 [LO NGẠI NGÔN NGỮ] Khách quan tâm rào cản tiếng Trung và điều kiện đầu vào.");
-		advice.push("👉 Tư vấn ngắn, rõ: học từ 0, có lộ trình tiền HSK và hỗ trợ thích nghi trước khi bay.");
+		advice.push("[TIP] [Khách quan tâm tài chính] Tập trung vào thu nhập, chi phí và khả năng tự chủ tài chính.");
+		advice.push(`[=>] Mở đầu bằng mức lương thực tập của ngành ${nganh}, rồi chốt bằng lộ trình học phí 0Đ và cơ hội việc làm sau tốt nghiệp.`);
+	} else if (data.focus_section === "nganh_hoc") {
+		advice.push("[TIP] [Đang xem ngành] Khách dừng lâu ở phần ngành học — đang so sánh lựa chọn.");
+		advice.push(`[=>] Giới thiệu ${nganh} trước, rồi so sánh với 1-2 ngành gần nhau về thu nhập và đầu ra để giúp khách chốt nhanh.`);
 	} else if (data.industry_switch_count > 1) {
-		advice.push(`💡 [PHÂN VÂN NGÀNH] Đã đổi ngành ${data.industry_switch_count} lần trước khi chốt ${data.nganh_hoc}.`);
-		advice.push("👉 Sale nên đóng vai hướng nghiệp, so sánh đầu ra, môi trường làm việc và thu nhập giữa 2-3 ngành gần nhau.");
+		advice.push(`[TIP] [Phân vân ngành] Đã đổi ngành ${data.industry_switch_count} lần trước khi chốt ${nganh}.`);
+		advice.push("[=>] Sale nên đóng vai hướng nghiệp, so sánh đầu ra, môi trường làm việc và thu nhập giữa 2-3 ngành gần nhau.");
 	} else if (data.time_on_page_seconds < 25) {
-		advice.push(`💡 [XEM NHANH] Khách lướt nhanh bằng ${data.device_model_name}.`);
-		advice.push("👉 Ưu tiên gửi Zalo kèm ảnh thực tế/KTX trước, sau đó mới gọi điện chốt nhu cầu.");
+		advice.push(`[TIP] [Xem nhanh] Khách lướt nhanh bằng ${data.device_model_name}.`);
+		advice.push("[=>] Ưu tiên gửi Zalo kèm ảnh thực tế/KTX trước, sau đó mới gọi điện chốt nhu cầu.");
 	} else {
-		advice.push(`💡 [TÌM HIỂU NGHIÊM TÚC] ${data.device_model_name} · ${data.network_label}. Ngành quan tâm: ${data.nganh_hoc}.`);
-		advice.push("👉 Gọi tư vấn theo kịch bản khám phá mục tiêu học tập, tài chính và thời điểm nhập học phù hợp.");
+		advice.push(`[TIP] [Tìm hiểu nghiêm túc] ${data.device_model_name}, mạng ${data.network_label}. Ngành quan tâm: ${nganh}.`);
+		advice.push("[=>] Gọi tư vấn theo kịch bản khám phá mục tiêu học tập, tài chính và thời điểm nhập học phù hợp.");
 	}
-	if (data.current_battery_level != null && data.current_battery_level <= 15) advice.push(`⚡ Pin chỉ còn ${data.current_battery_level}%, ưu tiên nhắn Zalo/gọi sớm để không rơi lead.`);
-	if (data.time_to_first_interaction_seconds > 120) advice.push("🧐 Khách suy nghĩ khá lâu trước khi điền form, cần tư vấn chuyên sâu và tránh chốt vội.");
-	if (isKeyRegion) advice.push(`📌 Khách ở ${data.form_city}, nên nhắc tới cộng đồng học viên đồng hương và case thành công gần khu vực này.`);
-	if (isNightTime) advice.push("🌙 Lead đến vào đêm muộn, nên nhắn chào ngay nhưng hẹn gọi lại vào giờ hành chính hôm sau.");
+	if (data.hardware_concurrency != null && data.hardware_concurrency <= 2) advice.push(`[NOTE] Thiết bị phần cứng yếu (${data.hardware_concurrency} nhân), ưu tiên nhắn Zalo thay vì gọi điện.`);
+	if (data.time_to_first_interaction_seconds > 120) advice.push("[SLOW] Khách suy nghĩ khá lâu trước khi điền form, cần tư vấn chuyên sâu và tránh chốt vội.");
+	if (isKeyRegion) advice.push(`[GEO] Khách ở ${data.form_city}, nên nhắc tới cộng đồng học viên đồng hương và case thành công gần khu vực này.`);
+	if (isNightTime) advice.push("[NIGHT] Lead đến vào đêm muộn, nên nhắn chào ngay nhưng hẹn gọi lại vào giờ hành chính hôm sau.");
 	return advice.join("\n");
 }
 function generateBehaviorSummary(data) {
-	const items = [
-		`⏱️ ${data.time_on_page_seconds}s trên trang`,
-		`🖱️ ${data.time_to_first_interaction_seconds || 0}s tới lần tương tác đầu`,
-		`📝 ${data.form_fill_duration_seconds || 0}s điền form`,
-		`📜 Cuộn ${data.scroll_depth_percent}%`,
-		`👀 Phiên #${data.current_session} · Hôm nay ${data.visits_today} · Tháng ${data.visits_month}`
-	];
-	if (data.industry_switch_count > 0) items.push(`🔄 Đổi ngành ${data.industry_switch_count} lần`);
-	if (data.focus_section) items.push(`🎯 Tập trung ${data.focus_section}`);
-	if (data.faq_clicked) items.push(`❓ FAQ ${data.faq_clicked}`);
-	if (data.is_copy_paste) items.push("📋 Có thao tác copy/paste");
-	return items.join(" | ");
+	const parts = [];
+	parts.push(`[TIME] Thời gian xem trang: ${data.time_on_page_seconds} giây`);
+	parts.push(`[MOUSE] Mất ${data.time_to_first_interaction_seconds || 0} giây để bắt đầu tương tác`);
+	parts.push(`[FORM] Điền form trong ${data.form_fill_duration_seconds || 0} giây`);
+	parts.push(`[SCROLL] Cuộn đọc ${data.scroll_depth_percent}% nội dung trang`);
+	parts.push(`[VISIT] Lần truy cập thứ ${data.current_session} (hôm nay ${data.visits_today} lần, tháng này ${data.visits_month} lần)`);
+	if (data.industry_switch_count > 0) parts.push(`[SWITCH] Đã đổi ngành xem ${data.industry_switch_count} lần trước khi chốt`);
+	if (data.focus_section) parts.push(`Dừng lâu ở ${{
+		luong_thuc_tap: "phần lương thực tập",
+		nganh_hoc: "phần ngành học",
+		hoc_phi: "phần học phí",
+		bang_cap: "phần bằng cấp"
+	}[data.focus_section] || data.focus_section}`);
+	const faqLabels = {
+		hoc_phi: "học phí 0Đ",
+		tieng_trung: "điều kiện tiếng Trung",
+		luong_thuc_tap: "lương thực tập",
+		bang_cap: "bằng cấp",
+		thoi_gian: "thời gian nhập học",
+		nganh_hoc: "chọn ngành"
+	};
+	if (data.faq_clicked) parts.push(`Đọc câu hỏi thường gặp về ${faqLabels[data.faq_clicked] || data.faq_clicked}`);
+	if (data.is_copy_paste) parts.push("[COPY] Có copy/paste số điện thoại");
+	if (data.scroll_back_count > 10) parts.push(`[UPDOWN] Cuộn lên/xuống nhiều (${data.scroll_back_count} lần) — đang đọc kỹ`);
+	if (data.is_headless_browser) parts.push("[BOT] Phát hiện trình duyệt tự động (bot)");
+	if (data.is_in_app_browser) parts.push("[APP] Mở trang trong app Facebook/TikTok/Zalo");
+	return parts.join(". ");
+}
+function joinParts(parts) {
+	return parts.filter((part) => part && part !== "Unknown").join(" ");
 }
 function generateDeviceTechInfo(data) {
-	const batteryInfo = data.start_battery_level != null && data.current_battery_level != null ? `Pin ${data.current_battery_level}% (giảm ${data.battery_drain}%)` : "Pin: thiết bị không chia sẻ";
-	const os = [data.operating_system, data.operating_system_version].filter((part) => part && part !== "Unknown").join(" ");
-	const browser = [data.browser, data.browser_version].filter((part) => part && part !== "Unknown").join(" ");
+	const hwInfo = data.device_memory != null && data.hardware_concurrency != null ? `RAM ~${data.device_memory}GB · ${data.hardware_concurrency} cores` : data.hardware_concurrency != null ? `${data.hardware_concurrency} cores` : "Phần cứng không chia sẻ";
+	const os = joinParts([data.operating_system, data.operating_system_version]);
+	const browser = joinParts([data.browser, data.browser_version]);
 	return [
-		[data.device_manufacturer, data.device_model_name].filter((part) => part && part !== "Unknown").join(" ") || "Thiết bị chưa nhận diện",
+		joinParts([data.device_manufacturer, data.device_model_name]) || "Thiết bị chưa nhận diện",
 		os || "Hệ điều hành chưa rõ",
 		browser || "Trình duyệt chưa rõ",
+		data.is_in_app_browser ? "Mở trong app (FB/TikTok/Zalo)" : "",
 		data.network_label,
-		batteryInfo
+		hwInfo
 	].filter(Boolean).join(" | ");
 }
-function generateTrafficAdsSource(data) {
-	const source = (data.utm_source || "Direct").trim();
+var PLATFORM_LABELS = {
+	facebook: "Facebook",
+	tiktok: "TikTok",
+	zalo: "Zalo",
+	google: "Google",
+	instagram: "Instagram",
+	twitter: "X (Twitter)",
+	telegram: "Telegram",
+	messenger: "Messenger",
+	youtube: "YouTube",
+	linkedin: "LinkedIn",
+	pinterest: "Pinterest",
+	reddit: "Reddit",
+	snapchat: "Snapchat",
+	wechat: "WeChat",
+	whatsapp: "WhatsApp",
+	viber: "Viber"
+};
+function platformLabel(source) {
+	return PLATFORM_LABELS[source.toLowerCase().trim()] || source;
+}
+function generateTrafficAdsSource(data, fallbackSource = "") {
+	const source = (data.utm_source || fallbackSource || "").trim() || (data.ttclid ? "TikTok" : "Direct");
 	if (!Boolean(data.utm_medium || data.utm_campaign || data.utm_content || data.utm_term || data.ttclid) && source.toLowerCase() === "direct") return "Nguồn: Truy cập trực tiếp (không qua chiến dịch quảng cáo)";
 	const parts = [
-		`Source: ${source}`,
-		data.utm_medium && `Medium: ${data.utm_medium}`,
-		data.utm_campaign && `Campaign: ${data.utm_campaign}`,
-		data.utm_content && `Content: ${data.utm_content}`,
-		data.utm_term && `Term: ${data.utm_term}`,
-		data.ttclid && `TTCLID: ${data.ttclid}`
+		`Nguồn: ${platformLabel(source)}`,
+		data.utm_medium && `Kênh: ${data.utm_medium}`,
+		data.utm_campaign && `Chiến dịch: ${data.utm_campaign}`,
+		data.utm_content && `Nội dung: ${data.utm_content}`,
+		data.utm_term && `Từ khoá: ${data.utm_term}`,
+		data.ttclid && `Mã TikTok: ${data.ttclid}`
 	].filter(Boolean);
-	return parts.length > 0 ? parts.join(" | ") : "Nguồn: Truy cập trực tiếp";
+	return parts.length > 0 ? parts.join(" · ") : "Nguồn: Truy cập trực tiếp";
 }
-function buildVisitorBehaviorPayload(input, cfg) {
+function buildVisitorBehaviorPayload(input, cfg, fallbackSource = "") {
 	const behavior = collectBehavior(input);
 	const assessment = scoreLead(behavior, cfg);
 	const snapshot = getTrackingSnapshot();
 	const saleAdvice = generateSaleAdvice(behavior, assessment);
 	const behaviorSummary = generateBehaviorSummary(behavior);
 	const deviceTechInfo = generateDeviceTechInfo(behavior);
-	const trafficAdsSource = generateTrafficAdsSource(behavior);
+	const trafficAdsSource = generateTrafficAdsSource(behavior, fallbackSource);
 	return {
 		behavior,
 		assessment,
@@ -866,7 +985,7 @@ function buildVisitorBehaviorPayload(input, cfg) {
 			attribution: snapshot.attribution,
 			metrics: {
 				...snapshot.metrics,
-				submissionCountSameVisitor: behavior.submission_count_same_ip
+				submissionCountSameVisitor: behavior.submission_count_same_visitor
 			},
 			form: input,
 			assessment,
@@ -876,6 +995,29 @@ function buildVisitorBehaviorPayload(input, cfg) {
 			trafficAdsSource
 		}
 	};
+}
+/**
+* Nhét TOÀN BỘ tham số thu gom được (Hub UTM Catch-All) vào các
+* <input type="hidden"> để khi form submit theo kiểu HTML truyền thống,
+* backend vẫn nhận đủ 100% "vết tích" của đường link.
+*
+* Chỉ render sau khi hydrate để tránh lệch SSR.
+*/
+function UtmHiddenFields({ model = "last", prefix = "" }) {
+	const [fields, setFields] = (0, import_react.useState)({});
+	(0, import_react.useEffect)(() => {
+		try {
+			setFields(getUtmPayload(model));
+		} catch {
+			setFields({});
+		}
+	}, [model]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: Object.entries(fields).map(([key, value]) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+		type: "hidden",
+		name: `${prefix}${key}`,
+		value: value ?? "",
+		readOnly: true
+	}, key)) });
 }
 var MAJORS = [
 	"Công nghệ Ô tô điện",
@@ -1034,8 +1176,14 @@ function LeadForm({ id = "dang-ky" }) {
 			return;
 		}
 		const phone = form.phone.replace(/\D/g, "");
-		if (!/^0\d{9}$/.test(phone)) {
-			setError("Số điện thoại phải đủ 10 chữ số và bắt đầu bằng 0 — ví dụ: 0912345678.");
+		if (!/^(03|05|07|08|09)\d{8}$/.test(phone)) {
+			setError("Số điện thoại không hợp lệ. Phải bắt đầu bằng 03, 05, 07, 08 hoặc 09 và đủ 10 số — ví dụ: 0912345678.");
+			setStatus("error");
+			return;
+		}
+		const name = form.name.trim();
+		if (name.length < 2 || !/^[\p{L}\s]+$/u.test(name)) {
+			setError("Họ và tên chỉ chứa chữ cái và dấu tiếng Việt, tối thiểu 2 ký tự.");
 			setStatus("error");
 			return;
 		}
@@ -1050,6 +1198,11 @@ function LeadForm({ id = "dang-ky" }) {
 			setStatus("error");
 			return;
 		}
+		if (await isDuplicateLeadRemote(phone, config)) {
+			setError("Số điện thoại này vừa được đăng ký. Tư vấn viên sẽ liên hệ với bạn sớm nhất.");
+			setStatus("error");
+			return;
+		}
 		if (rateLimited(config.form.rateLimitCount, config.form.rateLimitWindowMin)) {
 			setError("Bạn đã gửi nhiều lần trong thời gian ngắn. Vui lòng chờ vài phút rồi thử lại.");
 			setStatus("error");
@@ -1057,56 +1210,66 @@ function LeadForm({ id = "dang-ky" }) {
 		}
 		setError("");
 		setStatus("sending");
-		const { behavior, assessment, visitorBehaviorPayload } = buildVisitorBehaviorPayload({
-			city: form.province,
-			major: form.major
-		}, config.aiAdvisor);
-		const { score: aiScore, rank: aiRank } = assessment;
-		const variant = getVariant(config.abTest.enabled, config.abTest.split);
-		const source = utmSource();
-		const payload = {
-			full_name: form.name.trim().slice(0, 100),
-			phone,
-			email: email.slice(0, 255),
-			major: form.major,
-			city: form.province,
-			landing_url: typeof window !== "undefined" ? window.location.href : "Landing Page UTM",
-			source: typeof window !== "undefined" ? window.location.href : "Landing Page UTM",
-			created_at: visitorBehaviorPayload.submittedAt,
-			ab_variant: variant,
-			ai_score: aiScore,
-			ai_rank: aiRank,
-			risk_level: assessment.riskLevel,
-			lead_risk_level: assessment.riskLevel,
-			risk_reasons: assessment.reasons,
-			lead_risk_reasons: assessment.reasons,
-			recommended_action: assessment.recommendedAction,
-			utm_source: behavior.utm_source,
-			utm_medium: behavior.utm_medium,
-			utm_campaign: behavior.utm_campaign,
-			utm_content: behavior.utm_content,
-			utm_term: behavior.utm_term,
-			ttclid: behavior.ttclid,
-			visits_today: behavior.visits_today,
-			visits_month: behavior.visits_month,
-			current_session: behavior.current_session,
-			device_manufacturer: behavior.device_manufacturer,
-			device_family: behavior.device_family,
-			device_model_name: behavior.device_model_name,
-			operating_system: [behavior.operating_system, behavior.operating_system_version].filter(Boolean).join(" "),
-			browser: [behavior.browser, behavior.browser_version].filter(Boolean).join(" "),
-			network_provider: behavior.network_provider,
-			network_label: behavior.network_label,
-			sale_advice: visitorBehaviorPayload.saleAdvice,
-			lead_behavior_summary: visitorBehaviorPayload.behaviorSummary,
-			behavior_summary: visitorBehaviorPayload.behaviorSummary,
-			device_summary: visitorBehaviorPayload.deviceTechInfo,
-			device_tech_info: visitorBehaviorPayload.deviceTechInfo,
-			utm_traffic_source: visitorBehaviorPayload.trafficAdsSource,
-			traffic_ads_source: visitorBehaviorPayload.trafficAdsSource,
-			visitor_behavior_payload: visitorBehaviorPayload
-		};
+		let leadSaved = false;
 		try {
+			syncBehaviorSession({
+				storageMode: config.admin.storageMode,
+				supabaseUrl: config.admin.supabaseUrl,
+				supabaseAnonKey: config.admin.supabaseAnonKey
+			});
+			const sessionSource = utmSource();
+			const utmData = getUtmPayload("last");
+			const trackedSource = utmData.utm_source || sessionSource || "direct";
+			const variant = getVariant(config.abTest.enabled, config.abTest.split);
+			const { behavior, assessment, visitorBehaviorPayload } = buildVisitorBehaviorPayload({
+				city: form.province,
+				major: form.major
+			}, config.aiAdvisor, sessionSource);
+			const { score: aiScore, rank: aiRank } = assessment;
+			const source = trackedSource;
+			const payload = {
+				full_name: name.slice(0, 100),
+				phone,
+				email: email.slice(0, 255),
+				major: form.major,
+				city: form.province,
+				landing_url: typeof window !== "undefined" ? window.location.href : "Landing Page UTM",
+				source,
+				created_at: visitorBehaviorPayload.submittedAt,
+				ab_variant: variant,
+				ai_score: aiScore,
+				ai_rank: aiRank,
+				risk_level: assessment.riskLevel,
+				risk_reasons: assessment.reasons,
+				recommended_action: assessment.recommendedAction,
+				utm_source: source,
+				utm_medium: utmData.utm_medium || behavior.utm_medium,
+				utm_campaign: utmData.utm_campaign || behavior.utm_campaign,
+				utm_content: utmData.utm_content || behavior.utm_content,
+				utm_term: behavior.utm_term || utmData["utm_term"] || "",
+				ttclid: behavior.ttclid || utmData["ttclid"] || "",
+				fbclid: utmData["fbclid"] || "",
+				gclid: utmData["gclid"] || "",
+				referrer: utmData["referrer"] || "",
+				attribution_model: utmData["attribution_model"] || "last",
+				attribution_detected_by: utmData["attribution_detected_by"] || "",
+				raw_query: utmData.raw_query || "",
+				utm_params: utmData,
+				visits_today: behavior.visits_today,
+				visits_month: behavior.visits_month,
+				current_session: behavior.current_session,
+				device_manufacturer: behavior.device_manufacturer,
+				device_family: behavior.device_family,
+				device_model_name: behavior.device_model_name,
+				operating_system: joinParts([behavior.operating_system, behavior.operating_system_version]),
+				browser: joinParts([behavior.browser, behavior.browser_version]),
+				network_provider: behavior.network_provider,
+				network_label: behavior.network_label,
+				sale_advice: visitorBehaviorPayload.saleAdvice,
+				behavior_summary: visitorBehaviorPayload.behaviorSummary,
+				device_tech_info: visitorBehaviorPayload.deviceTechInfo,
+				traffic_ads_source: visitorBehaviorPayload.trafficAdsSource
+			};
 			const leadRecord = {
 				id: `ld_${Date.now()}`,
 				at: payload.created_at,
@@ -1134,30 +1297,74 @@ function LeadForm({ id = "dang-ky" }) {
 				utmMedium: payload.utm_medium,
 				utmCampaign: payload.utm_campaign,
 				utmContent: payload.utm_content,
+				utmTerm: payload.utm_term,
+				fbclid: payload.fbclid,
 				ttclid: payload.ttclid,
-				variant
+				gclid: payload.gclid,
+				rawQuery: utmData.raw_query,
+				referrer: payload.referrer,
+				attributionModel: payload.attribution_model,
+				attributionDetectedBy: payload.attribution_detected_by,
+				utmParams: Object.fromEntries(Object.entries(utmData).filter(([key]) => ![
+					"utm_source",
+					"utm_medium",
+					"utm_campaign",
+					"utm_content",
+					"utm_term",
+					"raw_query",
+					"landing_url",
+					"referrer",
+					"attribution_model",
+					"attribution_detected_by"
+				].includes(key))),
+				variant,
+				landing_url: payload.landing_url,
+				deviceManufacturer: payload.device_manufacturer,
+				deviceFamily: payload.device_family,
+				deviceModel: payload.device_model_name,
+				operatingSystem: payload.operating_system,
+				browser: payload.browser
 			};
-			await saveLead(leadRecord, config);
-			const delivery = await dispatchLead(config, payload);
-			if (!delivery.ok) {
+			const savePromise = saveLead(leadRecord, config).then((saved) => {
+				leadSaved = true;
+				return saved;
+			});
+			const [savedLead, delivery] = await Promise.all([savePromise, dispatchLead(config, payload)]);
+			if (config.admin.storageMode === "database" && savedLead.storage !== "database") throw new Error("CRM cloud delivery failed");
+			if (!delivery.ok) throw new Error("Webhook delivery failed");
+			if (delivery.failedCount && delivery.failedCount > 0) {
 				const failed = delivery.results.filter((result) => !result.ok).map((result) => result.label).join(", ");
-				console.warn("Webhook delivery incomplete:", delivery.results);
-				throw new Error(failed ? `Webhook chưa nhận được dữ liệu: ${failed}` : "Webhook chưa được cấu hình hoặc chưa phản hồi.");
+				console.warn(`Webhook partial failure (${delivery.failedCount}/${delivery.results.length}): ${failed}`);
 			}
 			trackConversion(source, config.abTest.enabled ? variant : void 0);
-			if (config.emailAutomation.enabled && email) {
-				const fill = (s) => s.replaceAll("{name}", payload.full_name).replaceAll("{phone}", payload.phone).replaceAll("{city}", payload.city || "").replaceAll("{ai_score}", String(aiScore));
-				sendLeadEmail({ data: {
+			if (config.emailAutomation.enabled) {
+				const fill = (s) => s.replaceAll("{name}", payload.full_name).replaceAll("{phone}", payload.phone).replaceAll("{city}", payload.city || "").replaceAll("{major}", form.major || "").replaceAll("{source}", source || "direct").replaceAll("{ai_score}", String(aiScore));
+				const htmlBody = (s) => `<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1a1a1a;line-height:1.6">${s.replaceAll("\n", "<br />").replaceAll("{name}", `<strong>${payload.full_name}</strong>`).replaceAll("{phone}", `<strong>${payload.phone}</strong>`).replaceAll("{city}", payload.city || "—").replaceAll("{major}", form.major || "—").replaceAll("{source}", source || "direct").replaceAll("{ai_score}", String(aiScore))}</div>`;
+				if (email) sendLeadEmail({ data: {
 					provider: config.emailAutomation.provider,
 					to: email,
 					from: config.emailAutomation.fromEmail,
 					subject: fill(config.emailAutomation.subject),
-					text: fill(config.emailAutomation.body)
-				} }).then((result) => {
-					if (!result.sent) console.warn("Lead confirmation email was not sent:", result.reason);
-				}).catch((error) => {
-					console.warn("Lead confirmation email failed:", error);
-				});
+					text: fill(config.emailAutomation.body),
+					html: htmlBody(config.emailAutomation.body),
+					resendApiKey: config.emailAutomation.resendApiKey,
+					gmailClientId: config.emailAutomation.gmailClientId,
+					gmailClientSecret: config.emailAutomation.gmailClientSecret,
+					gmailRefreshToken: config.emailAutomation.gmailRefreshToken
+				} }).catch((error) => console.warn("Lead confirmation email failed:", error));
+				const notifyTo = config.emailAutomation.notifyEmail.trim();
+				if (notifyTo) sendLeadEmail({ data: {
+					provider: config.emailAutomation.provider,
+					to: notifyTo,
+					from: config.emailAutomation.fromEmail,
+					subject: fill(config.emailAutomation.notifySubject),
+					text: fill(config.emailAutomation.notifyBody),
+					html: htmlBody(config.emailAutomation.notifyBody),
+					resendApiKey: config.emailAutomation.resendApiKey,
+					gmailClientId: config.emailAutomation.gmailClientId,
+					gmailClientSecret: config.emailAutomation.gmailClientSecret,
+					gmailRefreshToken: config.emailAutomation.gmailRefreshToken
+				} }).catch((error) => console.warn("Admin notification email failed:", error));
 			}
 			trackLead({ content_name: form.major || "Du hoc nghe Trung Quoc" }, config.tracking.events, config.tracking.ga4Id);
 			setForm(EMPTY);
@@ -1169,8 +1376,36 @@ function LeadForm({ id = "dang-ky" }) {
 				const thankYou = config.pages.find((page) => page.enabled && page.kind === "thankYou");
 				if (thankYou && typeof window !== "undefined") window.location.assign(`/${thankYou.path}`);
 			}
-		} catch {
-			setError("Có lỗi khi gửi thông tin. Vui lòng kiểm tra kết nối và thử gửi lại.");
+		} catch (err) {
+			console.error("Lead submit failed:", err);
+			if (!leadSaved) {
+				const fallbackPayload = {
+					full_name: name.slice(0, 100),
+					phone,
+					email: email.slice(0, 255),
+					city: form.province,
+					major: form.major,
+					source: "direct",
+					landing_url: typeof window !== "undefined" ? window.location.href : "",
+					created_at: (/* @__PURE__ */ new Date()).toISOString()
+				};
+				try {
+					await Promise.all([saveLead({
+						id: `ld_${Date.now()}`,
+						at: fallbackPayload.created_at,
+						name: fallbackPayload.full_name,
+						phone: fallbackPayload.phone,
+						email: fallbackPayload.email || void 0,
+						city: fallbackPayload.city || void 0,
+						major: fallbackPayload.major || void 0,
+						utmSource: "direct",
+						landing_url: fallbackPayload.landing_url
+					}, config), dispatchLead(config, fallbackPayload)]);
+				} catch (fallbackError) {
+					console.error("Fallback lead delivery failed:", fallbackError);
+				}
+			}
+			setError("Có lỗi khi gửi thông tin. Vui lòng kiểm tra kết nối v�� thử gửi lại.");
 			setStatus("error");
 			toast.error("Gửi chưa thành công", { description: "Vui lòng thử lại sau vài giây." });
 		}
@@ -1228,6 +1463,7 @@ function LeadForm({ id = "dang-ky" }) {
 						"aria-hidden": "true",
 						className: "absolute left-[-9999px] h-0 w-0 opacity-0"
 					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(UtmHiddenFields, { model: "last" }),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
 						required: true,
 						maxLength: 100,
@@ -1404,7 +1640,9 @@ function RecentLeadPopup() {
 	(0, import_react.useEffect)(() => {
 		setDismissed(false);
 		setVisible(false);
-		if (!fomo.enabled || fomo.source === "sample" && sampleItems.length === 0 || fomo.source === "recentLeads" && leadsRef.current.length === 0 && sampleItems.length === 0) return;
+		if (!fomo.enabled) return;
+		if (fomo.source === "sample" && sampleItems.length === 0) return;
+		if (fomo.source === "recentLeads" && leadsRef.current.length === 0) return;
 		if (fomo.respectReducedMotion && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 		let hideTimer;
 		let nextTimer;
@@ -1413,14 +1651,20 @@ function RecentLeadPopup() {
 		const minGap = Math.min(3600, Math.max(5, fomo.minDelaySec)) * 1e3;
 		const maxGap = Math.min(3600, Math.max(minGap / 1e3, fomo.maxDelaySec)) * 1e3;
 		const show = () => {
-			const actual = fomo.source === "recentLeads" ? pick(leadsRef.current, leadsRef.current.find((lead) => lead.name === lastName)) : void 0;
-			const sample = fomo.source === "sample" || leadsRef.current.length === 0 ? pick(sampleItems, sampleItems.find((entry) => entry.name === lastName)) : void 0;
-			const next = actual ? {
-				name: actual.name,
-				city: actual.city || "",
-				mins: Math.max(1, Math.floor((Date.now() - new Date(actual.at).getTime()) / 6e4))
-			} : sample;
-			if (!next) return;
+			let next;
+			if (fomo.source === "recentLeads") {
+				const actual = pick(leadsRef.current, leadsRef.current.find((lead) => lead.name === lastName));
+				if (!actual) return;
+				next = {
+					name: actual.name,
+					city: actual.city || "",
+					mins: Math.max(1, Math.floor((Date.now() - new Date(actual.at).getTime()) / 6e4))
+				};
+			} else {
+				const sample = pick(sampleItems, sampleItems.find((entry) => entry.name === lastName));
+				if (!sample) return;
+				next = sample;
+			}
 			lastName = next.name;
 			previousNameRef.current = lastName;
 			setItem(next);
@@ -1477,9 +1721,10 @@ function RecentLeadPopup() {
 		})
 	});
 }
-/** Carousel ảnh thực tế, tự chạy mượt, có nút chuyển và chấm điều hướng. */
+/** Carousel anh thuc te, tu chay muot, co nut chuyen, cham die huong va Lightbox phong to. */
 function PhotoCarousel({ slides, interval = 4e3 }) {
 	const [i, setI] = (0, import_react.useState)(0);
+	const [lightbox, setLightbox] = (0, import_react.useState)(false);
 	const paused = (0, import_react.useRef)(false);
 	(0, import_react.useEffect)(() => {
 		const id = window.setInterval(() => {
@@ -1487,7 +1732,21 @@ function PhotoCarousel({ slides, interval = 4e3 }) {
 		}, interval);
 		return () => window.clearInterval(id);
 	}, [slides.length, interval]);
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+	(0, import_react.useEffect)(() => {
+		if (!lightbox) return;
+		const onKey = (e) => {
+			if (e.key === "Escape") setLightbox(false);
+			if (e.key === "ArrowLeft") setI((p) => (p - 1 + slides.length) % slides.length);
+			if (e.key === "ArrowRight") setI((p) => (p + 1) % slides.length);
+		};
+		window.addEventListener("keydown", onKey);
+		document.body.style.overflow = "hidden";
+		return () => {
+			window.removeEventListener("keydown", onKey);
+			document.body.style.overflow = "";
+		};
+	}, [lightbox, slides.length]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "overflow-hidden rounded-2xl bg-card ring-1 ring-border",
 		onMouseEnter: () => paused.current = true,
 		onMouseLeave: () => paused.current = false,
@@ -1502,14 +1761,23 @@ function PhotoCarousel({ slides, interval = 4e3 }) {
 					style: { transform: `translateX(-${i * 100}%)` },
 					children: slides.map((s, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figure", {
 						className: "w-full shrink-0",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-							src: s.img,
-							alt: s.caption,
-							width: 1280,
-							height: 800,
-							loading: "lazy",
-							decoding: "async",
-							className: "aspect-[16/10] w-full object-cover"
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+							type: "button",
+							onClick: () => setLightbox(true),
+							className: "group relative block w-full",
+							"aria-label": `Phong to anh: ${s.caption}`,
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+								src: s.img,
+								alt: s.caption,
+								width: 1280,
+								height: 800,
+								loading: "lazy",
+								decoding: "async",
+								className: "aspect-[16/10] w-full cursor-zoom-in object-cover transition group-hover:brightness-95"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "pointer-events-none absolute bottom-2 right-2 rounded-lg bg-background/80 px-2 py-1 text-[10px] font-bold text-foreground opacity-0 backdrop-blur transition group-hover:opacity-100",
+								children: "Bam de phong to"
+							})]
 						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figcaption", {
 							className: "px-4 py-3 text-center text-sm font-semibold text-card-foreground/85",
 							children: [
@@ -1524,14 +1792,14 @@ function PhotoCarousel({ slides, interval = 4e3 }) {
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 					type: "button",
-					"aria-label": "Ảnh trước",
+					"aria-label": "Anh truoc",
 					onClick: () => setI((p) => (p - 1 + slides.length) % slides.length),
 					className: "absolute left-2 top-1/3 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 text-lg font-bold backdrop-blur",
 					children: "‹"
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 					type: "button",
-					"aria-label": "Ảnh tiếp theo",
+					"aria-label": "Anh tiep theo",
 					onClick: () => setI((p) => (p + 1) % slides.length),
 					className: "absolute right-2 top-1/3 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 text-lg font-bold backdrop-blur",
 					children: "›"
@@ -1541,12 +1809,65 @@ function PhotoCarousel({ slides, interval = 4e3 }) {
 			className: "flex justify-center gap-2 pb-4",
 			children: slides.map((s, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 				type: "button",
-				"aria-label": `Xem ảnh ${idx + 1}`,
+				"aria-label": `Xem anh ${idx + 1}`,
 				onClick: () => setI(idx),
 				className: `h-2 rounded-full transition-all ${idx === i ? "w-6 bg-primary" : "w-2 bg-border"}`
 			}, s.img))
 		})]
-	});
+	}), lightbox && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4",
+		onClick: () => setLightbox(false),
+		role: "dialog",
+		"aria-modal": "true",
+		"aria-label": "Phong to anh",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				"aria-label": "Dong",
+				onClick: () => setLightbox(false),
+				className: "absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(X, { className: "h-5 w-5" })
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				"aria-label": "Anh truoc",
+				onClick: (e) => {
+					e.stopPropagation();
+					setI((p) => (p - 1 + slides.length) % slides.length);
+				},
+				className: "absolute left-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-2xl font-bold text-white transition hover:bg-white/25",
+				children: "‹"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figure", {
+				className: "max-h-full max-w-5xl",
+				onClick: (e) => e.stopPropagation(),
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+					src: slides[i].img,
+					alt: slides[i].caption,
+					className: "max-h-[85vh] w-auto rounded-xl object-contain"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figcaption", {
+					className: "mt-3 text-center text-sm font-semibold text-white/90",
+					children: [
+						i + 1,
+						"/",
+						slides.length,
+						" — ",
+						slides[i].caption
+					]
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				"aria-label": "Anh tiep theo",
+				onClick: (e) => {
+					e.stopPropagation();
+					setI((p) => (p + 1) % slides.length);
+				},
+				className: "absolute right-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-2xl font-bold text-white transition hover:bg-white/25",
+				children: "›"
+			})
+		]
+	})] });
 }
 /** Chuẩn hoá số điện thoại & link Zalo từ cấu hình Admin. */
 function contactLinks(config) {
@@ -1630,160 +1951,76 @@ function FloatingContact() {
 		})]
 	});
 }
-/** Bỏ các phần trùng lặp (ví dụ model = hệ điều hành) để không hiển thị "Linux · Linux". */
-function dedupeParts(parts) {
-	const seen = /* @__PURE__ */ new Set();
-	const result = [];
-	for (const raw of parts) {
-		const value = (raw || "").trim();
-		if (!value) continue;
-		const key = value.toLowerCase();
-		if (seen.has(key)) continue;
-		seen.add(key);
-		result.push(value);
-	}
-	return result;
-}
 function formatDuration(totalSeconds) {
 	const safe = Math.max(0, Math.round(totalSeconds));
 	return `${Math.floor(safe / 60)}:${(safe % 60).toString().padStart(2, "0")}`;
 }
-function FooterStats({ title = "Thống kê truy cập thông minh", helperText = "Dữ liệu truy cập được gom từ cùng một kho tracking để đồng bộ giữa Analytics, Mini-CRM và Webhook." }) {
+function FooterStats({ title = "Thong ke truy cap", helperText = "So lieu truy cap duoc gom chung de dong bo giua Analytics, CRM va webhook." }) {
 	const snapshot = useVisitorTrackingSnapshot();
-	const deviceValue = dedupeParts([
-		snapshot.device.manufacturer !== "Unknown" ? snapshot.device.manufacturer : "",
-		snapshot.device.model !== "Unknown" ? snapshot.device.model : "",
-		snapshot.device.os !== "Unknown" ? snapshot.device.os : "",
-		snapshot.device.browser !== "Unknown" ? snapshot.device.browser : ""
-	]).join(" · ") || "Thiết bị chưa nhận diện";
-	const networkValue = snapshot.network.displayLabel && !snapshot.network.displayLabel.toLowerCase().includes("unknown") ? snapshot.network.displayLabel : snapshot.network.fallbackLabel || "Mạng băng thông rộng · Việt Nam";
 	const quickStats = [
 		{
 			icon: Users,
-			label: "Truy cập hôm nay",
-			value: snapshot.metrics.sessionCounts.today.toLocaleString("vi-VN"),
-			hint: "Lượt trong ngày"
+			label: "Hom nay",
+			value: snapshot.metrics.sessionCounts.today.toLocaleString("vi-VN")
 		},
 		{
 			icon: CalendarDays,
-			label: "Truy cập tháng này",
-			value: snapshot.metrics.sessionCounts.month.toLocaleString("vi-VN"),
-			hint: "Lượt trong tháng"
+			label: "Thang nay",
+			value: snapshot.metrics.sessionCounts.month.toLocaleString("vi-VN")
 		},
 		{
 			icon: Clock,
-			label: "Thời gian trên trang",
-			value: formatDuration(snapshot.metrics.timeOnPageSeconds),
-			hint: "Phút:giây · trực tiếp"
+			label: "Thoi gian",
+			value: formatDuration(snapshot.metrics.timeOnPageSeconds)
 		},
 		{
 			icon: MousePointerClick,
-			label: "Độ sâu cuộn trang",
-			value: `${Math.min(100, Math.max(0, snapshot.metrics.scrollDepthPercent))}%`,
-			hint: "Mức đã xem · trực tiếp"
-		}
-	];
-	const detailStats = [
-		{
-			icon: Activity,
-			label: "Phiên hiện tại",
-			value: `Phiên #${snapshot.metrics.sessionCounts.currentSession}`,
-			sub: `Mã khách: ${snapshot.visitorId.slice(-6).toUpperCase()}`
-		},
-		{
-			icon: Cpu,
-			label: "Thiết bị nhận diện",
-			value: deviceValue,
-			sub: snapshot.device.isInAppBrowser ? "Trình duyệt trong ứng dụng" : "Trình duyệt độc lập"
-		},
-		{
-			icon: Wifi,
-			label: "Mạng & khu vực",
-			value: networkValue,
-			sub: snapshot.network.flags.length > 0 ? `Tín hiệu: ${snapshot.network.flags.join(", ")}` : snapshot.network.connectionLabel || "Kết nối ổn định"
+			label: "Cuon",
+			value: `${Math.min(100, Math.max(0, snapshot.metrics.scrollDepthPercent))}%`
 		}
 	];
 	const isLive = snapshot.initialized;
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", {
-		"aria-label": "Thống kê lưu lượng truy cập",
-		className: "overflow-hidden rounded-2xl border border-border bg-card/80 shadow-[var(--shadow-card)] backdrop-blur sm:rounded-3xl",
+		"aria-label": "Thong ke luu luong truy cap",
+		className: "rounded-lg border border-border/50 bg-muted/30 px-3 py-2.5",
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "flex flex-col gap-3 border-b border-border/60 bg-gradient-to-br from-primary/10 via-card to-card px-4 py-4 sm:px-6 sm:py-5 md:flex-row md:items-center md:justify-between",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "min-w-0",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-						className: "text-sm font-extrabold text-foreground sm:text-base md:text-lg",
-						children: title
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mt-1 text-[11px] leading-relaxed text-muted-foreground sm:text-xs md:text-sm",
-						children: helperText
-					})]
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-					className: "inline-flex w-fit shrink-0 items-center gap-2 rounded-full bg-primary/10 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-primary ring-1 ring-primary/20 sm:px-3 sm:text-[11px]",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-						className: "relative flex h-2 w-2",
-						"aria-hidden": "true",
-						children: [isLive && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/70" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "relative inline-flex h-2 w-2 rounded-full bg-primary" })]
-					}), isLive ? "Trực tiếp" : "Đang khởi tạo"]
+				className: "mb-2 flex items-center gap-2",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+					className: "relative flex h-1.5 w-1.5",
+					"aria-hidden": "true",
+					children: [isLive && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" })]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+					className: "text-[11px] font-bold text-muted-foreground",
+					children: title
 				})]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-				className: "grid grid-cols-2 gap-px bg-border/60 lg:grid-cols-4",
+				className: "grid grid-cols-4 gap-2",
 				children: quickStats.map((stat) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "bg-card px-3 py-3 sm:px-4 sm:py-4 md:px-5 md:py-5",
+					className: "text-center",
 					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-[11px]",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(stat.icon, {
-								className: "h-3.5 w-3.5 shrink-0",
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "flex items-center justify-center gap-1 text-[9px] font-medium uppercase tracking-wide text-muted-foreground/70",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(stat.icon, {
+								className: "h-2.5 w-2.5 shrink-0",
 								"aria-hidden": "true"
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "truncate",
-								children: stat.label
-							})]
+							})
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "mt-2 text-xl font-black tabular-nums text-foreground sm:text-2xl md:text-3xl",
+							className: "mt-0.5 text-sm font-bold tabular-nums text-foreground",
 							children: stat.value
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "mt-0.5 text-[10px] text-muted-foreground sm:text-[11px]",
-							children: stat.hint
+							className: "text-[8px] leading-tight text-muted-foreground/60",
+							children: stat.label
 						})
 					]
 				}, stat.label))
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dl", {
-				className: "grid gap-px border-t border-border/60 bg-border/60 sm:grid-cols-3",
-				children: detailStats.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "min-w-0 bg-card px-4 py-3 sm:px-5 sm:py-4",
-					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dt", {
-							className: "flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-[11px]",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(item.icon, {
-								className: "h-3.5 w-3.5 shrink-0",
-								"aria-hidden": "true"
-							}), item.label]
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-							className: "mt-1.5 break-words text-xs font-bold leading-snug text-foreground sm:text-sm",
-							title: item.value,
-							children: item.value
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "mt-1 break-words text-[10px] leading-relaxed text-muted-foreground sm:text-[11px]",
-							children: item.sub
-						})
-					]
-				}, item.label))
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-				className: "flex items-start gap-1.5 border-t border-border/60 px-5 py-3 text-[11px] leading-relaxed text-muted-foreground sm:px-6 sm:text-xs",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MapPin, {
-					className: "mt-0.5 h-3.5 w-3.5 shrink-0",
-					"aria-hidden": "true"
-				}), snapshot.network.lookupStatus === "resolved" ? `Nhà mạng hiện tại: ${snapshot.network.provider || snapshot.network.connectionLabel}. Khi dịch vụ IP thiếu dữ liệu, hệ thống tự chuyển sang chuỗi mạng thay thế để không hiển thị lỗi.` : "Dịch vụ định vị IP đang dùng cơ chế dự phòng; giao diện vẫn hiển thị chuỗi mạng chuyên nghiệp, không lộ lỗi hệ thống."]
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-1.5 text-[9px] leading-tight text-muted-foreground/50",
+				children: helperText
 			})
 		]
 	});
@@ -1858,9 +2095,13 @@ function SiteMenu({ pages, brandName, logoUrl, showLogo = true, ctaLabel, ctaHre
 		children: pages.map((page) => {
 			const isActive = activePageId ? page.id === activePageId : page.path === "";
 			return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, {
-				to: page.path ? "/$" : "/",
-				params: page.path ? { _splat: page.path } : void 0,
-				hash: page.path ? void 0 : "top",
+				...page.path ? {
+					to: "/$",
+					params: { _splat: page.path }
+				} : {
+					to: "/",
+					hash: "top"
+				},
 				className: `rounded-full px-3 py-1.5 text-sm font-semibold transition ${isActive ? "bg-primary text-primary-foreground shadow-[var(--shadow-cta)]" : "text-muted-foreground hover:bg-background hover:text-foreground"}`,
 				children: page.title
 			}, page.id);
@@ -2233,7 +2474,7 @@ function Landing() {
 				]
 			}),
 			config.trafficStats.enabled && config.trafficStats.position === "afterHero" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
-				className: "border-b border-border bg-background py-8 sm:py-10",
+				className: "border-b border-border/40 bg-muted/20 py-3",
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 					className: "mx-auto max-w-6xl px-4",
 					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FooterStats, {
@@ -2511,6 +2752,7 @@ function Landing() {
 				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+				id: "faq",
 				style: sectionStyle("faq"),
 				className: "mx-auto max-w-3xl px-4 py-16 sm:py-20",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {

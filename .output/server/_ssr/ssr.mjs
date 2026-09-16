@@ -1,3 +1,5 @@
+import processModule from "node:process";
+import { Buffer } from "node:buffer";
 //#region node_modules/.nitro/vite/services/ssr/index.js
 var lastCapturedError;
 var TTL_MS = 5e3;
@@ -91,9 +93,77 @@ function renderErrorPage() {
   </body>
 </html>`;
 }
+var BACKUP_TABLES = [
+	"funnel_configs",
+	"funnel_analytics",
+	"leads",
+	"visitor_sessions"
+];
+function isBackupRequest(request) {
+	return new URL(request.url).pathname === "/api/backup";
+}
+function isAuthorizedBackupRequest(request) {
+	const token = processModule.env["BACKUP_CRON_TOKEN"];
+	return request.headers.get("x-vercel-cron") === "1" || Boolean(token) && new URL(request.url).searchParams.get("token") === token || Boolean(token) && request.headers.get("x-backup-token") === token;
+}
+async function handleBackupRequest(request) {
+	if (!isAuthorizedBackupRequest(request)) return new Response("Unauthorized", { status: 401 });
+	const supabaseUrl = processModule.env["SUPABASE_URL"]?.replace(/\/$/, "");
+	const serviceKey = processModule.env["SUPABASE_SERVICE_ROLE_KEY"];
+	const resendKey = processModule.env["RESEND_API_KEY"];
+	const fromEmail = processModule.env["BACKUP_FROM_EMAIL"];
+	const missing = [
+		!supabaseUrl && "SUPABASE_URL",
+		!serviceKey && "SUPABASE_SERVICE_ROLE_KEY",
+		!resendKey && "RESEND_API_KEY",
+		!fromEmail && "BACKUP_FROM_EMAIL"
+	].filter((value) => Boolean(value));
+	if (missing.length > 0) return new Response(`Backup environment is incomplete: ${missing.join(", ")}`, { status: 503 });
+	const headers = {
+		apikey: serviceKey,
+		Authorization: `Bearer ${serviceKey}`
+	};
+	const configResponse = await fetch(`${supabaseUrl}/rest/v1/funnel_configs?id=eq.1&select=data`, { headers });
+	if (!configResponse.ok) return new Response("Cannot read backup configuration", { status: 502 });
+	const admin = (await configResponse.json())[0]?.data?.admin;
+	const recipient = admin?.backupEmail?.trim();
+	const schedule = admin?.cronSchedule || "off";
+	if (!recipient || schedule === "off") return new Response("Backup disabled");
+	if (schedule === "weekly" && (/* @__PURE__ */ new Date()).getUTCDay() !== 1) return new Response("Weekly backup is not due");
+	const tables = await Promise.all(BACKUP_TABLES.map(async (table) => {
+		const response = await fetch(`${supabaseUrl}/rest/v1/${table}?select=*${table === "leads" || table === "visitor_sessions" ? "&limit=5000" : ""}`, { headers });
+		return [table, response.ok ? await response.json() : []];
+	}));
+	const backup = JSON.stringify({
+		generated_at: (/* @__PURE__ */ new Date()).toISOString(),
+		tables: Object.fromEntries(tables)
+	}, null);
+	const emailResponse = await fetch("https://api.resend.com/emails", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${resendKey}`
+		},
+		body: JSON.stringify({
+			from: fromEmail,
+			to: [recipient],
+			subject: `[Backup${new URL(request.url).searchParams.get("test") === "1" ? " Test" : ""}] ${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}`,
+			text: "Bản backup dữ liệu Supabase được đính kèm.",
+			attachments: [{
+				filename: `backup-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.json`,
+				content: Buffer.from(backup, "utf8").toString("base64")
+			}]
+		})
+	});
+	if (!emailResponse.ok) {
+		console.error("Backup email failed", await emailResponse.text());
+		return new Response("Backup email failed", { status: 502 });
+	}
+	return new Response("Backup sent");
+}
 var serverEntryPromise;
 async function getServerEntry() {
-	if (!serverEntryPromise) serverEntryPromise = import("./server-M8u-e4UI.mjs").then((m) => m.default ?? m);
+	if (!serverEntryPromise) serverEntryPromise = import("./server-DZV__67O.mjs").then((m) => m.default ?? m);
 	return serverEntryPromise;
 }
 async function normalizeCatastrophicSsrResponse(response) {
@@ -117,6 +187,7 @@ function isH3SwallowedErrorBody(body) {
 }
 var server_default = { async fetch(request, env, ctx) {
 	try {
+		if (isBackupRequest(request)) return await handleBackupRequest(request);
 		return await normalizeCatastrophicSsrResponse(await (await getServerEntry()).fetch(request, env, ctx));
 	} catch (error) {
 		console.error(error);

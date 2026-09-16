@@ -1,26 +1,24 @@
-import { c as createServerFn, i as TSS_SERVER_FUNCTION } from "./createServerFn-CIHAFgYl.mjs";
-import { n as objectType, r as stringType, t as enumType } from "../_libs/zod.mjs";
+import { c as createServerFn } from "./createServerFn-CIHAFgYl.mjs";
+import { i as stringType, n as objectType, t as enumType } from "../_libs/zod.mjs";
+import { t as createServerRpc } from "./createServerRpc-B90ckaqP.mjs";
 import processModule from "node:process";
-//#region node_modules/.nitro/vite/services/ssr/assets/email.functions-DmAPUqG1.js
-var createServerRpc = (serverFnMeta, splitImportFn) => {
-	const url = "/_serverFn/" + serverFnMeta.id;
-	return Object.assign(splitImportFn, {
-		url,
-		serverFnMeta,
-		[TSS_SERVER_FUNCTION]: true
-	});
-};
+//#region node_modules/.nitro/vite/services/ssr/assets/email.functions-srT-jqbE.js
 /**
 * AUTOMATED EMAIL SEQUENCER (auto-responder).
-* Gửi email cảm ơn ngay sau khi khách đăng ký. Chạy phía server để
-* API key không lộ ra trình duyệt: thêm secret RESEND_API_KEY.
+* Gửi email cảm ơn ngay sau khi khách đăng ký. Chạy phía server.
+* API key lấy từ payload (Admin nhập trong UI) hoặc env var nếu có.
 */
 var schema = objectType({
 	provider: enumType(["resend", "gmail"]).default("resend"),
 	to: stringType().email(),
 	from: stringType().email(),
 	subject: stringType().min(1),
-	text: stringType().min(1)
+	text: stringType().min(1),
+	html: stringType().optional(),
+	resendApiKey: stringType().optional(),
+	gmailClientId: stringType().optional(),
+	gmailClientSecret: stringType().optional(),
+	gmailRefreshToken: stringType().optional()
 });
 var checkEmailConfig_createServerFn_handler = createServerRpc({
 	id: "5dd11d22fa873a9491cd5c93fc3d45224e628a4cc8d4b35c4fa8cccd1e4b748c",
@@ -32,9 +30,9 @@ var checkEmailConfig = createServerFn({ method: "GET" }).handler(checkEmailConfi
 	gmailConfigured: Boolean(processModule.env["GMAIL_CLIENT_ID"] && processModule.env["GMAIL_CLIENT_SECRET"] && processModule.env["GMAIL_REFRESH_TOKEN"])
 }));
 async function sendWithGmail(data) {
-	const clientId = processModule.env["GMAIL_CLIENT_ID"];
-	const clientSecret = processModule.env["GMAIL_CLIENT_SECRET"];
-	const refreshToken = processModule.env["GMAIL_REFRESH_TOKEN"];
+	const clientId = data.gmailClientId || processModule.env["GMAIL_CLIENT_ID"];
+	const clientSecret = data.gmailClientSecret || processModule.env["GMAIL_CLIENT_SECRET"];
+	const refreshToken = data.gmailRefreshToken || processModule.env["GMAIL_REFRESH_TOKEN"];
 	if (!clientId || !clientSecret || !refreshToken) return {
 		sent: false,
 		reason: "missing_gmail_secrets"
@@ -86,7 +84,7 @@ var sendLeadEmail_createServerFn_handler = createServerRpc({
 }, (opts) => sendLeadEmail.__executeServer(opts));
 var sendLeadEmail = createServerFn({ method: "POST" }).validator((data) => schema.parse(data)).handler(sendLeadEmail_createServerFn_handler, async ({ data }) => {
 	if (data.provider === "gmail") return sendWithGmail(data);
-	const apiKey = processModule.env["RESEND_API_KEY"];
+	const apiKey = data.resendApiKey || processModule.env["RESEND_API_KEY"];
 	if (!apiKey) return {
 		sent: false,
 		reason: "missing_api_key"
@@ -101,7 +99,8 @@ var sendLeadEmail = createServerFn({ method: "POST" }).validator((data) => schem
 			from: data.from,
 			to: [data.to],
 			subject: data.subject,
-			text: data.text
+			text: data.text,
+			...data.html ? { html: data.html } : {}
 		})
 	});
 	if (!res.ok) {

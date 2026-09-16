@@ -1,17 +1,17 @@
-import { n as __toESM } from "../_runtime.mjs";
+import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-hZzAbtud.mjs";
+import { c as HeadContent, d as createRouter, f as Outlet, g as Link, h as createRootRouteWithContext, l as useRouterState, m as createFileRoute, p as lazyRouteComponent, s as Scripts, v as useRouter } from "../_libs/@tanstack/react-router+[...].mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { a as clearAnalytics, d as saveLead, f as testSupabaseConnection, h as useSiteConfig, i as SiteConfigProvider, l as loadAnalytics, m as trackVisit, n as DEFAULT_CONFIG, o as clearLeads, r as LEAD_CREATED_EVENT, s as exportLeadsCsv, t as ANALYTICS_UPDATED_EVENT, u as loadLeads } from "./use-site-config-DjShPvKg.mjs";
+import { S as useSiteConfig, a as clearAnalytics, c as exportConfigFile, g as migrateLocalDataToSupabase, h as loadLeads, i as SiteConfigProvider, l as exportLeadsCsv, m as loadCloudAnalytics, n as DEFAULT_CONFIG, o as clearLeads, p as loadAnalytics, r as LEAD_CREATED_EVENT, t as ANALYTICS_UPDATED_EVENT, u as exportSupabaseSql, v as saveLead, x as trackVisit, y as testSupabaseConnection } from "./use-site-config-DOhv-5qs.mjs";
 import { n as useAdmin, t as AdminProvider } from "./use-admin-D0sSGca6.mjs";
-import { A as GraduationCap, B as ClipboardList, C as Megaphone, E as LogOut, F as Download, I as Database, M as FileText, N as Eye, O as Link2, P as EyeOff, R as CloudUpload, T as Mail, U as BookOpen, V as ChartColumn, W as Bell, _ as Palette, a as Trash2, b as Monitor, c as Smartphone, d as Search, f as Save, g as Pencil, i as Upload, j as Globe, k as KeyRound, l as SlidersHorizontal, m as Plus, o as Tablet, p as RotateCcw, s as SquareSplitHorizontal, t as X, u as Settings2, v as Package } from "../_libs/lucide-react.mjs";
-import { c as HeadContent, d as createRouter, f as Outlet, g as Link, h as createRootRouteWithContext, l as useRouterState, m as createFileRoute, p as lazyRouteComponent, s as Scripts, v as useRouter } from "../_libs/@tanstack/react-router+[...].mjs";
-import { a as resetVariant, c as testWebhookEndpoint, f as utmSource, i as getVariant, p as webhookConfigurationWarning, r as fireTestEvent, s as sendTestEmail, t as checkEmailConfig, u as trackInteraction } from "./ab-CgpnHV5s.mjs";
+import { A as EyeOff, D as Globe, E as GraduationCap, F as ClipboardList, I as ChartColumn, M as Database, N as CloudUpload, O as FileText, P as Clock, R as BookOpen, S as LogOut, T as KeyRound, _ as Monitor, a as Tablet, b as Megaphone, c as Smartphone, d as Save, f as Plus, h as Palette, i as Target, j as Download, k as Eye, l as Settings2, m as Pencil, o as SquareSplitHorizontal, p as Phone, r as Trash2, s as Sparkles, t as X, u as Search, w as Link2, x as Mail, z as Bell } from "../_libs/lucide-react.mjs";
+import { c as resetVariant, d as testWebhookEndpoint, g as webhookConfigurationWarning, h as utmSource, i as fireTestEvent, n as checkEmailConfig, o as getUtmPayload, p as trackInteraction, s as getVariant, t as captureUtm, u as sendTestEmail } from "./ab-CjZgG4e6.mjs";
 import { t as QueryClientProvider } from "../_libs/tanstack__react-query.mjs";
 import { t as QueryClient } from "../_libs/tanstack__query-core.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-CoLac75B.js
+//#region node_modules/.nitro/vite/services/ssr/assets/router-ptWnxuYA.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
-var styles_default = "/assets/styles-DbfEeyld.css";
+var styles_default = "/assets/styles-DfEa8-_U.css";
 function reportLovableError(error, context = {}) {
 	if (typeof window === "undefined") return;
 	window.__lovableEvents?.captureException?.(error, {
@@ -73,6 +73,11 @@ var TOOL_GROUPS = [
 				icon: Pencil
 			},
 			{
+				key: "theme",
+				label: "Màu & Font",
+				icon: Palette
+			},
+			{
 				key: "pages",
 				label: "Đa Trang",
 				icon: FileText
@@ -81,6 +86,16 @@ var TOOL_GROUPS = [
 				key: "fomo",
 				label: "FOMO Popups",
 				icon: Bell
+			},
+			{
+				key: "countdown",
+				label: "Đồng Hồ Đếm Ngược",
+				icon: Clock
+			},
+			{
+				key: "contact",
+				label: "Hotline & Zalo",
+				icon: Phone
 			}
 		]
 	},
@@ -95,6 +110,16 @@ var TOOL_GROUPS = [
 				icon: ClipboardList
 			},
 			{
+				key: "form",
+				label: "Form & Webhook",
+				icon: FileText
+			},
+			{
+				key: "webhook",
+				label: "Webhook Hub",
+				icon: Link2
+			},
+			{
 				key: "email",
 				label: "Auto Email",
 				icon: Mail
@@ -105,9 +130,19 @@ var TOOL_GROUPS = [
 				icon: SquareSplitHorizontal
 			},
 			{
-				key: "webhook",
-				label: "Webhook Hub",
-				icon: Link2
+				key: "utm",
+				label: "UTM Hub",
+				icon: Globe
+			},
+			{
+				key: "ai",
+				label: "AI Sales Advisor",
+				icon: Sparkles
+			},
+			{
+				key: "pixel",
+				label: "Pixel & Sự Kiện Ads",
+				icon: Target
 			}
 		]
 	},
@@ -130,19 +165,20 @@ var TOOL_GROUPS = [
 				key: "webmaster",
 				label: "Webmaster & Scripts",
 				icon: Globe
-			},
-			{
-				key: "storage",
-				label: "Storage Mode",
-				icon: Database
 			}
 		]
 	},
 	{
-		key: "system",
-		label: "Hệ thống",
+		key: "configuration",
+		label: "Cấu hình",
 		icon: Settings2,
+		includePreviewSettings: true,
 		tools: [
+			{
+				key: "storage",
+				label: "Storage & Xuất/Nhập",
+				icon: Database
+			},
 			{
 				key: "cron",
 				label: "Cloud Cron & Backup",
@@ -181,10 +217,9 @@ var DEVICES = [
 var ICON_BUTTON = "flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors";
 function AdminBar() {
 	const { authed, openModal, logout, device, setDevice, deviceSizes, setDeviceSize, resetDeviceSizes, previewEnabled, setPreviewEnabled } = useAdmin();
-	const { save, reset, exportFile, importConfig, dirty } = useSiteConfig();
+	const { save, dirty } = useSiteConfig();
 	const [hidden, setHidden] = (0, import_react.useState)(true);
 	const [openGroup, setOpenGroup] = (0, import_react.useState)(null);
-	const configInputRef = (0, import_react.useRef)(null);
 	const barRef = (0, import_react.useRef)(null);
 	(0, import_react.useEffect)(() => setHidden(isDevicePreview()), []);
 	(0, import_react.useEffect)(() => {
@@ -202,15 +237,6 @@ function AdminBar() {
 			document.removeEventListener("keydown", onKey);
 		};
 	}, [openGroup]);
-	function handleImportConfig(file) {
-		const reader = new FileReader();
-		reader.onload = () => {
-			const ok = importConfig(String(reader.result));
-			window.alert(ok ? "Đã nhập và lưu cấu hình thành công." : "File cấu hình không hợp lệ hoặc thiếu trường bắt buộc.");
-		};
-		reader.onerror = () => window.alert("Không thể đọc file cấu hình.");
-		reader.readAsText(file);
-	}
 	if (hidden || !authed) return null;
 	function toggleGroup(key) {
 		setOpenGroup((current) => current === key ? null : key);
@@ -243,22 +269,72 @@ function AdminBar() {
 							}), open && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 								role: "menu",
 								"aria-label": group.label,
-								className: "absolute left-0 top-full z-[95] mt-1 w-56 overflow-hidden rounded-lg border border-white/10 bg-neutral-900 p-1 shadow-xl",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-									className: "px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white/40",
-									children: group.label
-								}), group.tools.map((tool) => {
-									const ToolIcon = tool.icon;
-									return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-										role: "menuitem",
-										onClick: () => {
-											setOpenGroup(null);
-											openModal(tool.key);
-										},
-										className: "flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-xs font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ToolIcon, { className: "h-4 w-4 shrink-0" }), tool.label]
-									}, tool.key);
-								})]
+								className: `absolute left-0 top-full z-[95] mt-1 overflow-hidden rounded-lg border border-white/10 bg-neutral-900 p-1 shadow-xl ${group.includePreviewSettings ? "w-72" : "w-56"}`,
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white/40",
+										children: group.label
+									}),
+									group.tools.map((tool) => {
+										const ToolIcon = tool.icon;
+										return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+											role: "menuitem",
+											onClick: () => {
+												setOpenGroup(null);
+												openModal(tool.key);
+											},
+											className: "flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-xs font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ToolIcon, { className: "h-4 w-4 shrink-0" }), tool.label]
+										}, tool.key);
+									}),
+									group.includePreviewSettings && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "mt-1 border-t border-white/10 p-1",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+											className: "px-1 py-1 text-[10px] font-bold uppercase tracking-wide text-white/40",
+											children: "Kích thước khung xem trước"
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "flex items-center gap-2 text-[11px] text-white/60",
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+													className: "flex items-center gap-1",
+													children: ["Rộng", /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+														"aria-label": "Chiều rộng khung xem thử",
+														type: "number",
+														min: "280",
+														max: "1920",
+														value: deviceSizes[device].width,
+														onChange: (event) => setDeviceSize(device, {
+															...deviceSizes[device],
+															width: Math.max(280, Number(event.target.value) || 280)
+														}),
+														className: "w-16 rounded border border-white/20 bg-white/10 px-1.5 py-1 text-center text-[11px] text-white"
+													})]
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+													className: "flex items-center gap-1",
+													children: ["Cao", /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+														"aria-label": "Chiều cao khung xem thử",
+														type: "number",
+														min: "400",
+														max: "1600",
+														value: deviceSizes[device].height,
+														onChange: (event) => setDeviceSize(device, {
+															...deviceSizes[device],
+															height: Math.max(400, Number(event.target.value) || 400)
+														}),
+														className: "w-16 rounded border border-white/20 bg-white/10 px-1.5 py-1 text-center text-[11px] text-white"
+													})]
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+													onClick: resetDeviceSizes,
+													className: "rounded-md bg-white/10 px-2 py-1 text-[11px] font-semibold text-white/70 hover:bg-white/20 hover:text-white",
+													title: "Khôi phục kích thước mặc định",
+													children: "Mặc định"
+												})
+											]
+										})]
+									})
+								]
 							})]
 						}, group.key);
 					})
@@ -287,110 +363,6 @@ function AdminBar() {
 							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { className: "h-4 w-4" })
 						}, item.key);
 					})
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "relative shrink-0",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						onClick: () => toggleGroup("settings"),
-						"aria-expanded": openGroup === "settings",
-						"aria-haspopup": "menu",
-						"aria-label": "Kích thước khung xem trước và cấu hình",
-						title: "Kích thước khung xem trước & cấu hình",
-						className: `${ICON_BUTTON} ${openGroup === "settings" ? "bg-white text-neutral-900" : "bg-white/10 text-white/80 hover:bg-white/20"}`,
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SlidersHorizontal, { className: "h-4 w-4" })
-					}), openGroup === "settings" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "absolute left-0 top-full z-[95] mt-1 w-64 rounded-lg border border-white/10 bg-neutral-900 p-2 shadow-xl",
-						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-								className: "px-1 pb-1 text-[10px] font-bold uppercase tracking-wide text-white/40",
-								children: "Kích thước khung xem trước"
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "flex items-center gap-2 px-1 pb-2 text-[11px] text-white/60",
-								children: [
-									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-										className: "flex items-center gap-1",
-										children: ["Rộng", /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-											"aria-label": "Chiều rộng khung xem thử",
-											type: "number",
-											min: "280",
-											max: "1920",
-											value: deviceSizes[device].width,
-											onChange: (event) => setDeviceSize(device, {
-												...deviceSizes[device],
-												width: Math.max(280, Number(event.target.value) || 280)
-											}),
-											className: "w-16 rounded border border-white/20 bg-white/10 px-1.5 py-1 text-center text-[11px] text-white"
-										})]
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-										className: "flex items-center gap-1",
-										children: ["Cao", /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-											"aria-label": "Chiều cao khung xem thử",
-											type: "number",
-											min: "400",
-											max: "1600",
-											value: deviceSizes[device].height,
-											onChange: (event) => setDeviceSize(device, {
-												...deviceSizes[device],
-												height: Math.max(400, Number(event.target.value) || 400)
-											}),
-											className: "w-16 rounded border border-white/20 bg-white/10 px-1.5 py-1 text-center text-[11px] text-white"
-										})]
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-										onClick: resetDeviceSizes,
-										className: "rounded-md bg-white/10 px-2 py-1 text-[11px] font-semibold text-white/70 hover:bg-white/20 hover:text-white",
-										title: "Khôi phục kích thước mặc định",
-										children: "Mặc định"
-									})
-								]
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "border-t border-white/10 pt-1",
-								children: [
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-										className: "px-1 py-1 text-[10px] font-bold uppercase tracking-wide text-white/40",
-										children: "Cấu hình"
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-										onClick: () => {
-											setOpenGroup(null);
-											exportFile();
-										},
-										className: "flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-xs font-medium text-white/80 hover:bg-white/10 hover:text-white",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Package, { className: "h-4 w-4" }), " Xuất config"]
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-										ref: configInputRef,
-										type: "file",
-										accept: "application/json,.json,.js",
-										className: "hidden",
-										onChange: (event) => {
-											const file = event.target.files?.[0];
-											if (file) handleImportConfig(file);
-											event.target.value = "";
-										}
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-										onClick: () => configInputRef.current?.click(),
-										className: "flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-xs font-medium text-white/80 hover:bg-white/10 hover:text-white",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Upload, { className: "h-4 w-4" }), " Nhập config"]
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-										onClick: () => {
-											if (window.confirm("Khôi phục cấu hình gốc? Mọi thay đổi đã lưu sẽ mất.")) {
-												setOpenGroup(null);
-												reset();
-											}
-										},
-										className: "flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-xs font-medium text-red-300 hover:bg-red-500/15",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(RotateCcw, { className: "h-4 w-4" }), " Khôi phục gốc"]
-									})
-								]
-							})
-						]
-					})]
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "ml-auto flex shrink-0 items-center gap-1",
@@ -720,16 +692,102 @@ function ThemeModal({ onClose }) {
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 				label: "Font tiêu đề",
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
 					value: t.fontHeading,
-					onChange: (e) => update((d) => d.theme.fontHeading = e.target.value)
+					onChange: (e) => update((d) => d.theme.fontHeading = e.target.value),
+					className: "w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-white/20 dark:bg-white/5",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Be Vietnam Pro",
+							children: "Be Vietnam Pro"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Inter",
+							children: "Inter"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Roboto",
+							children: "Roboto"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Open Sans",
+							children: "Open Sans"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Montserrat",
+							children: "Montserrat"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Nunito",
+							children: "Nunito"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Lexend",
+							children: "Lexend"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Manrope",
+							children: "Manrope"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Sora",
+							children: "Sora"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "system-ui",
+							children: "System UI"
+						})
+					]
 				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 				label: "Font nội dung",
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
 					value: t.fontBody,
-					onChange: (e) => update((d) => d.theme.fontBody = e.target.value)
+					onChange: (e) => update((d) => d.theme.fontBody = e.target.value),
+					className: "w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-white/20 dark:bg-white/5",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Be Vietnam Pro",
+							children: "Be Vietnam Pro"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Inter",
+							children: "Inter"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Roboto",
+							children: "Roboto"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Open Sans",
+							children: "Open Sans"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Montserrat",
+							children: "Montserrat"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Nunito",
+							children: "Nunito"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Lexend",
+							children: "Lexend"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Manrope",
+							children: "Manrope"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "Sora",
+							children: "Sora"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+							value: "system-ui",
+							children: "System UI"
+						})
+					]
 				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -760,6 +818,11 @@ function CountdownModal({ onClose }) {
 					value: c.slotsLeft,
 					onChange: (e) => update((d) => d.countdown.slotsLeft = +e.target.value)
 				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toggle, {
+				checked: c.autoDecrement !== false,
+				onChange: (v) => update((d) => d.countdown.autoDecrement = v),
+				label: "Tự giảm số suất khi có khách đăng ký"
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 				label: "Dòng chữ mô tả",
@@ -965,106 +1028,17 @@ function PixelModal({ onClose }) {
 function WebmasterModal({ onClose }) {
 	const { config, update } = useSiteConfig();
 	const t = config.tracking;
-	const [logs, setLogs] = (0, import_react.useState)(null);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(AdminModal, {
 		title: "Webmaster & Custom Scripts",
 		subtitle: "Pixel, tracking, xác minh Google và mã tùy chỉnh",
 		onClose,
 		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "mb-4 rounded-xl border border-neutral-200 p-3 dark:border-white/10",
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+				className: "mb-3 rounded-lg bg-sky-50 px-3 py-2 text-[11px] leading-relaxed text-sky-800",
 				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mb-3 text-xs font-bold",
-						children: "Pixel & sự kiện quảng cáo"
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-						label: "Facebook Pixel ID",
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
-							value: t.facebookPixelId,
-							onChange: (e) => update((d) => d.tracking.facebookPixelId = e.target.value)
-						})
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-						label: "TikTok Pixel ID",
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
-							value: t.tiktokPixelId,
-							onChange: (e) => update((d) => d.tracking.tiktokPixelId = e.target.value)
-						})
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-						label: "TikTok Events API Access Token",
-						hint: "Chỉ lưu để backend dùng; không nhúng token vào browser.",
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
-							type: "password",
-							value: t.tiktokAccessToken,
-							autoComplete: "new-password",
-							onChange: (e) => update((d) => d.tracking.tiktokAccessToken = e.target.value)
-						})
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "grid gap-3 sm:grid-cols-2",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-							label: "GA4 Measurement ID",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
-								value: t.ga4Id,
-								placeholder: "G-XXXXXXXXXX",
-								onChange: (e) => update((d) => d.tracking.ga4Id = e.target.value)
-							})
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-							label: "Google Tag Manager ID",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
-								value: t.gtmId,
-								placeholder: "GTM-XXXXXXX",
-								onChange: (e) => update((d) => d.tracking.gtmId = e.target.value)
-							})
-						})]
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mb-2 mt-3 text-[11px] font-semibold text-neutral-600",
-						children: "Sự kiện được phép ghi nhận"
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-						className: "grid gap-1 sm:grid-cols-2",
-						children: [
-							["pageView", "PageView"],
-							["formStart", "Form Start"],
-							["lead", "Lead"],
-							["completeRegistration", "CompleteRegistration"],
-							["click", "Click CTA / liên hệ"],
-							["scroll", "Scroll depth"]
-						].map(([key, label]) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toggle, {
-							checked: t.events[key] !== false,
-							onChange: (value) => update((draft) => {
-								draft.tracking.events[key] = value;
-							}),
-							label
-						}, key))
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mt-3 text-[11px] text-neutral-400",
-						children: "Webhook nhận UTM, hành vi form, click, scroll và trạng thái chuyển đổi sau khi CRM lưu lead thành công. Dùng Webmaster làm nơi kiểm tra Pixel và tracking duy nhất."
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						type: "button",
-						onClick: () => setLogs(fireTestEvent()),
-						className: "mt-3 w-full rounded-lg bg-neutral-900 py-2.5 text-xs font-bold text-white dark:bg-white dark:text-neutral-900",
-						children: "Kiểm tra sự kiện Pixel / Ads"
-					}),
-					logs && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-						className: "mt-3 space-y-1 text-[11px]",
-						children: logs.map((log) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
-							className: "flex gap-2",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: log.ok ? "text-emerald-500" : "text-red-500",
-								children: log.ok ? "OK" : "Lỗi"
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: log.channel }),
-								": ",
-								log.detail
-							] })]
-						}, log.channel))
-					})
+					"Cấu hình Pixel, sự kiện quảng cáo và kiểm tra tracking nằm ở mục",
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: " Pixel & Sự Kiện Ads" }),
+					" trong toolbar. Tránh chỉnh trùng lặp ở hai nơi khác nhau."
 				]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
@@ -1257,6 +1231,71 @@ function AiModal({ onClose }) {
 					})
 				]
 			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 mb-1 text-xs font-bold text-neutral-700",
+				children: "Trọng số chấm điểm (tổng 100)"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "grid grid-cols-3 gap-2",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Thiết bị VIP",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							type: "number",
+							value: a.weightDevice,
+							onChange: (e) => update((d) => d.aiAdvisor.weightDevice = +e.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Tỉnh trọng điểm",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							type: "number",
+							value: a.weightRegion,
+							onChange: (e) => update((d) => d.aiAdvisor.weightRegion = +e.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Điền nhanh (bot)",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							type: "number",
+							value: a.weightFastFill,
+							onChange: (e) => update((d) => d.aiAdvisor.weightFastFill = +e.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Thời gian trên trang",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							type: "number",
+							value: a.weightTimeOnPage,
+							onChange: (e) => update((d) => d.aiAdvisor.weightTimeOnPage = +e.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Độ sâu cuộn",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							type: "number",
+							value: a.weightScroll,
+							onChange: (e) => update((d) => d.aiAdvisor.weightScroll = +e.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Quay lại nhiều lần",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							type: "number",
+							value: a.weightReturnVisit,
+							onChange: (e) => update((d) => d.aiAdvisor.weightReturnVisit = +e.target.value)
+						})
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+				label: "Mẫu kịch bản gọi",
+				hint: "Dùng {name} {city} {major} {ai_rank} {ai_score} {sale_advice}",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextArea, {
+					value: a.callScriptTemplate,
+					onChange: (e) => update((d) => d.aiAdvisor.callScriptTemplate = e.target.value)
+				})
+			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveHint, {})
 		]
 	});
@@ -1300,6 +1339,48 @@ function EmailModal({ onClose }) {
 				className: `mb-3 text-xs ${validFrom ? "text-emerald-600" : "text-amber-600"}`,
 				children: validFrom ? "Địa chỉ From hợp lệ." : "Cần nhập email From hợp lệ."
 			}),
+			e.provider === "resend" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+				label: "Resend API Key",
+				hint: "Tạo tại resend.com/api-keys. Dán vào đây hoặc đặt RESEND_API_KEY trên server.",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+					type: "password",
+					autoComplete: "new-password",
+					value: e.resendApiKey,
+					onChange: (ev) => update((d) => d.emailAutomation.resendApiKey = ev.target.value),
+					placeholder: "re_..."
+				})
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+					label: "Gmail Client ID",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+						type: "password",
+						autoComplete: "new-password",
+						value: e.gmailClientId,
+						onChange: (ev) => update((d) => d.emailAutomation.gmailClientId = ev.target.value),
+						placeholder: "xxxx.apps.googleusercontent.com"
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+					label: "Gmail Client Secret",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+						type: "password",
+						autoComplete: "new-password",
+						value: e.gmailClientSecret,
+						onChange: (ev) => update((d) => d.emailAutomation.gmailClientSecret = ev.target.value),
+						placeholder: "GOCSPX-..."
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+					label: "Gmail Refresh Token",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+						type: "password",
+						autoComplete: "new-password",
+						value: e.gmailRefreshToken,
+						onChange: (ev) => update((d) => d.emailAutomation.gmailRefreshToken = ev.target.value),
+						placeholder: "1//0e..."
+					})
+				})
+			] }),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
 				label: "Email nhận test",
 				hint: "Chỉ dùng để gửi email kiểm tra, không lưu secret.",
@@ -1308,6 +1389,16 @@ function EmailModal({ onClose }) {
 					value: testTo,
 					onChange: (event) => setTestTo(event.target.value),
 					placeholder: "ban@example.com"
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+				label: "Email nhận thông báo lead mới",
+				hint: "Đội ngũ tư vấn sẽ nhận email khi có khách đăng ký. Dùng {name} {phone} {city} {major} {source} {ai_score}",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+					type: "email",
+					value: e.notifyEmail,
+					onChange: (ev) => update((d) => d.emailAutomation.notifyEmail = ev.target.value),
+					placeholder: "tu-van@congty.com"
 				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
@@ -1344,6 +1435,30 @@ function EmailModal({ onClose }) {
 					" trên server. Runtime Cloudflare dùng Gmail API OAuth2, không dùng SMTP TCP trực tiếp."
 				]
 			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mb-3 rounded-lg border border-sky-200 p-3",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mb-2 text-xs font-bold text-sky-800",
+						children: "Email thông báo cho đội ngũ tư vấn"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Tiêu đề thông báo",
+						hint: "Dùng {name} {phone} {city} {major} {source} {ai_score}",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: e.notifySubject,
+							onChange: (ev) => update((d) => d.emailAutomation.notifySubject = ev.target.value)
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Nội dung thông báo",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextArea, {
+							value: e.notifyBody,
+							onChange: (ev) => update((d) => d.emailAutomation.notifyBody = ev.target.value)
+						})
+					})
+				]
+			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 				type: "button",
 				disabled: !validFrom || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testTo) || testState === "testing",
@@ -1356,7 +1471,11 @@ function EmailModal({ onClose }) {
 							to: testTo,
 							from: e.fromEmail,
 							subject: "Email test từ Funnel Builder",
-							text: "Đây là email kiểm tra cấu hình tự động hóa email."
+							text: "Đây là email kiểm tra cấu hình tự động hóa email.",
+							resendApiKey: e.resendApiKey,
+							gmailClientId: e.gmailClientId,
+							gmailClientSecret: e.gmailClientSecret,
+							gmailRefreshToken: e.gmailRefreshToken
 						} });
 					}).then((result) => {
 						setTestState(result.sent ? "ok" : "error");
@@ -1388,79 +1507,18 @@ function WebhookModal({ onClose }) {
 		subtitle: "Gửi lead tới nhiều nơi cùng lúc",
 		onClose,
 		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "mb-4 space-y-3 rounded-xl border border-neutral-200 p-3 dark:border-white/10",
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+				className: "mb-3 rounded-lg bg-sky-50 px-3 py-2 text-[11px] leading-relaxed text-sky-800",
 				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "text-xs font-bold",
-						children: "Form đăng ký & UTM"
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "grid gap-3 sm:grid-cols-2",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-							label: "Tiêu đề form",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
-								value: config.form.headline,
-								onChange: (event) => update((draft) => draft.form.headline = event.target.value)
-							})
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-							label: "Nhãn nút gửi form",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
-								value: config.form.ctaLabel,
-								onChange: (event) => update((draft) => draft.form.ctaLabel = event.target.value)
-							})
-						})]
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-						label: "Webhook chính",
-						hint: "Endpoint này vẫn được gửi cùng các endpoint đa kênh bên dưới.",
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
-							value: config.form.webhookUrl,
-							placeholder: "https://hook.make.com/...",
-							onChange: (event) => update((draft) => draft.form.webhookUrl = event.target.value)
-						})
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "grid gap-3 sm:grid-cols-2",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-							label: "Giới hạn gửi",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
-								type: "number",
-								min: "1",
-								value: config.form.rateLimitCount,
-								onChange: (event) => update((draft) => draft.form.rateLimitCount = Math.max(1, Number(event.target.value) || 1))
-							})
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-							label: "Trong số phút",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
-								type: "number",
-								min: "1",
-								value: config.form.rateLimitWindowMin,
-								onChange: (event) => update((draft) => draft.form.rateLimitWindowMin = Math.max(1, Number(event.target.value) || 1))
-							})
-						})]
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-						className: "text-[11px] text-neutral-400",
-						children: [
-							"UTM được đọc từ URL quảng cáo và gửi trong các trường",
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "font-semibold",
-								children: " traffic_ads_source"
-							}),
-							",",
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "font-semibold",
-								children: " utm_source"
-							}),
-							",",
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "font-semibold",
-								children: " utm_campaign"
-							}),
-							" của lead."
-						]
-					})
+					"Tiêu đề form, nhãn nút CTA, webhook chính và giới hạn gửi nằm ở mục",
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: " Form & Webhook" }),
+					" trong toolbar. UTM được đọc tự động từ URL quảng cáo và gửi trong các trường",
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: " traffic_ads_source" }),
+					", ",
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "utm_source" }),
+					",",
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: " utm_campaign" }),
+					" của lead."
 				]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -1491,66 +1549,18 @@ function WebhookModal({ onClose }) {
 						className: "mb-1 text-xs font-bold text-neutral-800",
 						children: "AI Sales Advisor & kịch bản gọi"
 					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
 						className: "mb-3 text-[11px] text-neutral-500",
-						children: "AI dùng hành vi tracking đã thu thập để chấm điểm, phân loại và gợi ý cách gọi. Kết quả được gửi cùng payload webhook và lưu trong Mini-CRM."
+						children: [
+							"AI dùng hành vi tracking đã thu thập để chấm điểm, phân loại và gợi ý cách gọi. Kết quả được gửi cùng payload webhook và lưu trong Mini-CRM. Cấu hình chi tiết (regex VIP, tỉnh trọng điểm, ngưỡng) nằm ở mục",
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: " AI Sales Advisor" }),
+							" trong toolbar."
+						]
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toggle, {
 						checked: config.aiAdvisor.enabled,
 						onChange: (value) => update((draft) => draft.aiAdvisor.enabled = value),
 						label: "Bật AI Sales Advisor"
-					}),
-					config.aiAdvisor.enabled && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "mt-3 space-y-3",
-						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-								label: "Regex thiết bị ưu tiên",
-								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
-									value: config.aiAdvisor.vipDeviceRegex,
-									onChange: (event) => update((draft) => draft.aiAdvisor.vipDeviceRegex = event.target.value)
-								})
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-								label: "Tỉnh trọng điểm, phân tách bằng |",
-								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
-									value: config.aiAdvisor.keyRegions,
-									onChange: (event) => update((draft) => draft.aiAdvisor.keyRegions = event.target.value)
-								})
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "grid grid-cols-3 gap-2",
-								children: [
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-										label: "Điền nhanh (s)",
-										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
-											type: "number",
-											min: "1",
-											value: config.aiAdvisor.fastFillThresholdSec,
-											onChange: (event) => update((draft) => draft.aiAdvisor.fastFillThresholdSec = Math.max(1, Number(event.target.value) || 1))
-										})
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-										label: "VIP: thời gian (s)",
-										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
-											type: "number",
-											min: "1",
-											value: config.aiAdvisor.vipTimeOnPageSec,
-											onChange: (event) => update((draft) => draft.aiAdvisor.vipTimeOnPageSec = Math.max(1, Number(event.target.value) || 1))
-										})
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-										label: "VIP: cuộn (%)",
-										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
-											type: "number",
-											min: "1",
-											max: "100",
-											value: config.aiAdvisor.vipScrollPercent,
-											onChange: (event) => update((draft) => draft.aiAdvisor.vipScrollPercent = Math.min(100, Math.max(1, Number(event.target.value) || 1)))
-										})
-									})
-								]
-							})
-						]
 					})
 				]
 			}),
@@ -1664,17 +1674,21 @@ function WebhookModal({ onClose }) {
 	});
 }
 function AnalyticsModal({ onClose }) {
+	const { config } = useSiteConfig();
 	const [a, setA] = (0, import_react.useState)(null);
 	(0, import_react.useEffect)(() => {
 		const refresh = () => setA(loadAnalytics());
 		refresh();
+		loadCloudAnalytics(config).then((cloud) => {
+			if (cloud) setA(cloud);
+		});
 		window.addEventListener(ANALYTICS_UPDATED_EVENT, refresh);
 		return () => window.removeEventListener(ANALYTICS_UPDATED_EVENT, refresh);
-	}, []);
+	}, [config]);
 	const cr = a && a.visits > 0 ? (a.leads / a.visits * 100).toFixed(1) : "0.0";
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(AdminModal, {
 		title: "Thống Kê & Analytics",
-		subtitle: "Số liệu thời gian thực (local)",
+		subtitle: config.admin.storageMode === "database" ? "Số liệu Analytics từ Supabase" : "Số liệu thời gian thực (local)",
 		onClose,
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
@@ -1772,7 +1786,11 @@ function LeadsModal({ onClose }) {
 		const refresh = () => setLeads(loadLeads());
 		refresh();
 		window.addEventListener(LEAD_CREATED_EVENT, refresh);
-		return () => window.removeEventListener(LEAD_CREATED_EVENT, refresh);
+		window.addEventListener("storage", refresh);
+		return () => {
+			window.removeEventListener(LEAD_CREATED_EVENT, refresh);
+			window.removeEventListener("storage", refresh);
+		};
 	}, []);
 	const cloud = config.admin.storageMode === "database" && !!config.admin.supabaseUrl;
 	const key = q.trim().toLowerCase();
@@ -1845,120 +1863,100 @@ function LeadsModal({ onClose }) {
 			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 				className: "mt-3 overflow-x-auto rounded-xl border border-neutral-200 dark:border-white/10",
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("table", {
-					className: "w-full min-w-[560px] text-left text-xs",
+					className: "w-full min-w-[480px] text-left text-xs",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("thead", {
 						className: "bg-neutral-100 text-[10px] uppercase tracking-wide text-neutral-500 dark:bg-white/5",
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("tr", { children: [
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", {
-								className: "px-3 py-2",
-								children: "Họ tên"
+								className: "px-2 py-2",
+								children: "Khách"
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", {
-								className: "px-3 py-2",
-								children: "Điện thoại"
+								className: "px-2 py-2",
+								children: "SĐT"
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", {
-								className: "px-3 py-2",
-								children: "Tỉnh/Thành"
+								className: "px-2 py-2",
+								children: "Tỉnh"
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", {
-								className: "px-3 py-2",
+								className: "px-2 py-2",
 								children: "Ngành"
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", {
-								className: "px-3 py-2",
+								className: "px-2 py-2",
 								children: "Thời gian"
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", {
-								className: "px-3 py-2",
+								className: "px-2 py-2",
 								children: "Nguồn"
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("th", {
-								className: "px-3 py-2",
-								children: "Lưu tại"
+								className: "px-2 py-2",
+								children: "Lưu"
 							})
 						] })
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("tbody", { children: filtered.map((l) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("tr", {
-						className: "border-t border-neutral-200 dark:border-white/10",
+						className: "border-t border-neutral-200 align-top dark:border-white/10",
 						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
-								className: "px-3 py-2 font-semibold",
-								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "min-w-0",
-									children: [
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-											className: "break-words",
-											children: l.name
-										}),
-										l.aiRank && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											className: "ml-1.5 rounded bg-amber-100 px-1.5 text-[10px] font-bold text-amber-700",
-											children: l.aiRank
-										}),
-										l.riskLevel && l.riskLevel !== "low" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											title: l.riskReasons?.join("; ") || l.recommendedAction || "Cần kiểm tra thêm",
-											className: `ml-1.5 rounded px-1.5 text-[10px] font-bold ${l.riskLevel === "high" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`,
-											children: l.riskLevel === "high" ? "CẦN XÁC MINH" : "XEM LẠI"
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-											className: "mt-1 space-y-1 text-[11px] font-normal leading-relaxed text-neutral-500",
-											children: [
-												l.deviceTechInfo && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-													className: "break-words",
-													children: l.deviceTechInfo
-												}),
-												l.networkLabel && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-													className: "break-words",
-													children: l.networkLabel
-												}),
-												l.trafficAdsSource && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-													className: "break-words",
-													children: l.trafficAdsSource
-												}),
-												l.saleAdvice && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-													className: "break-words text-neutral-700 dark:text-neutral-200",
-													children: l.saleAdvice
-												})
-											]
-										})
-									]
-								})
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("td", {
+								className: "max-w-[140px] px-2 py-2 font-semibold",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "truncate",
+										title: l.name,
+										children: l.name
+									}),
+									l.aiRank && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "ml-1.5 rounded bg-amber-100 px-1.5 text-[10px] font-bold text-amber-700",
+										children: l.aiRank
+									}),
+									l.riskLevel && l.riskLevel !== "low" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										title: l.riskReasons?.join("; ") || l.recommendedAction || "Cần kiểm tra thêm",
+										className: `ml-1.5 rounded px-1.5 text-[10px] font-bold ${l.riskLevel === "high" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`,
+										children: l.riskLevel === "high" ? "CẦN XÁC MINH" : "XEM LẠI"
+									}),
+									l.saleAdvice && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "mt-1 text-[10px] font-normal leading-snug text-neutral-500 dark:text-neutral-300",
+										children: l.saleAdvice
+									})
+								]
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
-								className: "px-3 py-2 tabular-nums",
+								className: "whitespace-nowrap px-2 py-2 tabular-nums",
 								children: l.phone
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
-								className: "px-3 py-2",
+								className: "max-w-[80px] truncate px-2 py-2",
+								title: l.city || "",
 								children: l.city || "—"
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
-								className: "px-3 py-2",
+								className: "max-w-[100px] truncate px-2 py-2",
+								title: l.major || "",
 								children: l.major || "—"
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
-								className: "px-3 py-2 text-neutral-500",
+								className: "whitespace-nowrap px-2 py-2 text-neutral-500",
 								children: new Date(l.at).toLocaleString("vi-VN")
 							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
-								className: "px-3 py-2 text-neutral-500",
-								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "space-y-1",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: l.utmSource || "direct" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-										className: "text-[11px] leading-relaxed",
-										children: [
-											"Phiên ",
-											l.currentSession || 1,
-											" · Hôm nay",
-											" ",
-											l.visitsToday || 0,
-											" · Tháng ",
-											l.visitsMonth || 0
-										]
-									})]
-								})
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("td", {
+								className: "px-2 py-2 text-neutral-500",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: l.utmSource || "direct" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "text-[10px] leading-tight",
+									children: [
+										"Phiên ",
+										l.currentSession || 1,
+										" · Hôm nay",
+										" ",
+										l.visitsToday || 0,
+										" · Tháng ",
+										l.visitsMonth || 0
+									]
+								})]
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("td", {
-								className: "px-3 py-2",
+								className: "px-2 py-2",
 								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 									className: `rounded-full px-2 py-0.5 text-[10px] font-bold ${l.storage === "database" ? "bg-sky-100 text-sky-700" : "bg-neutral-200 text-neutral-700"}`,
 									children: l.storage === "database" ? "Cloud" : "Local"
@@ -1972,9 +1970,12 @@ function LeadsModal({ onClose }) {
 	});
 }
 function StorageModal({ onClose }) {
-	const { config, update } = useSiteConfig();
+	const { config, update, importConfig, reset } = useSiteConfig();
 	const a = config.admin;
+	const importRef = (0, import_react.useRef)(null);
 	const [testing, setTesting] = (0, import_react.useState)(null);
+	const [migration, setMigration] = (0, import_react.useState)(null);
+	const [migrating, setMigrating] = (0, import_react.useState)(false);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(AdminModal, {
 		title: "Storage Mode",
 		subtitle: "Local (mặc định) hoặc Supabase Cloud",
@@ -2015,10 +2016,75 @@ function StorageModal({ onClose }) {
 					children: "Kiểm tra kết nối"
 				}),
 				testing !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: `text-xs font-semibold ${testing ? "text-emerald-600" : "text-red-600"}`,
-					children: testing ? "Kết nối thành công." : "Không kết nối được. Kiểm tra lại URL/Key."
+					className: `text-xs font-semibold ${testing.ok && testing.schemaReady ? "text-emerald-600" : testing.ok ? "text-amber-600" : "text-red-600"}`,
+					children: testing.ok && testing.schemaReady ? "Kết nối và schema Supabase đã sẵn sàng." : testing.ok ? "Đã kết nối Supabase, nhưng chưa có schema. Hãy chạy supabase/funnel_configs.sql và supabase/visitor_tracking.sql trong SQL Editor." : testing.reason === "unauthorized" ? "URL tới được nhưng key không được Supabase chấp nhận. Hãy dùng publishable/anon key đúng project." : testing.reason === "invalid_url" ? "URL Supabase không đúng định dạng https://<project>.supabase.co." : "Không thể kết nối Supabase. Kiểm tra mạng, URL và CORS."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					disabled: migrating || !testing?.ok || !testing.schemaReady,
+					onClick: async () => {
+						setMigrating(true);
+						setMigration(null);
+						try {
+							const result = await migrateLocalDataToSupabase(config);
+							setMigration(`Config: ${result.configSynced ? "đã đồng bộ" : "lỗi"}; Analytics: ${result.analyticsSynced ? "đã đồng bộ" : "lỗi"}; lead tải lên: ${result.leadsUploaded}; đã có trên cloud: ${result.leadsSkipped}; lỗi: ${result.leadsFailed}. Dữ liệu LocalStorage vẫn được giữ lại.`);
+						} catch {
+							setMigration("Đồng bộ thất bại. Kiểm tra RLS và schema Supabase.");
+						} finally {
+							setMigrating(false);
+						}
+					},
+					className: "mb-3 rounded-lg border border-sky-600 px-3 py-2 text-xs font-bold text-sky-700 disabled:cursor-not-allowed disabled:opacity-40",
+					children: migrating ? "Đang đồng bộ..." : "Đồng bộ LocalStorage lên Supabase"
+				}),
+				migration && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mb-3 text-xs font-semibold text-sky-700",
+					children: migration
 				})
 			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => exportConfigFile(config),
+					className: "rounded-lg border border-neutral-700 px-3 py-2 text-xs font-bold text-neutral-700",
+					children: "Xuất config local"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => exportSupabaseSql(config),
+					className: "rounded-lg border border-sky-700 px-3 py-2 text-xs font-bold text-sky-700",
+					children: "Xuất SQL Supabase"
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+				ref: importRef,
+				type: "file",
+				accept: ".js,.json,application/json,text/javascript",
+				className: "hidden",
+				onChange: async (event) => {
+					const file = event.target.files?.[0];
+					event.target.value = "";
+					if (!file) return;
+					const imported = importConfig(await file.text());
+					window.alert(imported ? "Đã nhập và lưu cấu hình. Secret Supabase/email vẫn được giữ local." : "File cấu hình không hợp lệ.");
+				}
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => importRef.current?.click(),
+					className: "rounded-lg border border-neutral-700 px-3 py-2 text-xs font-bold text-neutral-700",
+					children: "Nhập config local"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => {
+						if (window.confirm("Khôi phục cấu hình mặc định? Dữ liệu Supabase không bị xóa.")) reset();
+					},
+					className: "rounded-lg border border-amber-600 px-3 py-2 text-xs font-bold text-amber-700",
+					children: "Khôi phục mặc định"
+				})]
+			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveHint, {})
 		]
 	});
@@ -2215,9 +2281,194 @@ function AbTestModal({ onClose }) {
 		]
 	});
 }
+function UtmModal({ onClose }) {
+	const [currentParams, setCurrentParams] = (0, import_react.useState)(null);
+	const [testUrl, setTestUrl] = (0, import_react.useState)("");
+	const [builtUrl, setBuiltUrl] = (0, import_react.useState)("");
+	(0, import_react.useEffect)(() => {
+		if (typeof window === "undefined") return;
+		try {
+			const first = getUtmPayload("first");
+			const last = getUtmPayload("last");
+			const params = {};
+			for (const [key, value] of Object.entries(last)) if (value) params[key] = value;
+			if (first["utm_source"] && first["utm_source"] !== last["utm_source"]) params["first_touch_source"] = first["utm_source"];
+			setCurrentParams(params);
+		} catch {
+			setCurrentParams({});
+		}
+	}, []);
+	function buildUrl() {
+		try {
+			const base = testUrl.trim() || window.location.origin + window.location.pathname;
+			const u = new URL(base);
+			const medium = document.getElementById("utm-medium")?.value || "";
+			const campaign = document.getElementById("utm-campaign")?.value || "";
+			const content = document.getElementById("utm-content")?.value || "";
+			const term = document.getElementById("utm-term")?.value || "";
+			const sourceSelect = document.getElementById("utm-source")?.value || "";
+			if (sourceSelect) u.searchParams.set("utm_source", sourceSelect);
+			if (medium) u.searchParams.set("utm_medium", medium);
+			if (campaign) u.searchParams.set("utm_campaign", campaign);
+			if (content) u.searchParams.set("utm_content", content);
+			if (term) u.searchParams.set("utm_term", term);
+			setBuiltUrl(u.toString());
+		} catch {
+			setBuiltUrl("URL không hợp lệ");
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(AdminModal, {
+		title: "UTM Hub",
+		subtitle: "Kiểm tra & tạo link UTM cho chiến dịch quảng cáo",
+		onClose,
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mb-3 rounded-lg bg-neutral-100 px-3 py-2 dark:bg-white/5",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mb-1 text-xs font-bold uppercase tracking-wide text-neutral-500",
+					children: "UTM trên URL hiện tại"
+				}), currentParams === null ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-[11px] text-neutral-400",
+					children: "Đang đọc…"
+				}) : Object.keys(currentParams).length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-[11px] text-neutral-400",
+					children: "Không có tham số UTM — truy cập trực tiếp."
+				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "space-y-0.5 text-[11px]",
+					children: Object.entries(currentParams).map(([k, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: k }),
+						": ",
+						v
+					] }, k))
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mb-2 rounded-lg border border-neutral-200 p-3 dark:border-white/10",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mb-2 text-xs font-bold uppercase tracking-wide text-neutral-500",
+						children: "Tạo link UTM"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "URL đích (để trống = trang hiện tại)",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							value: testUrl,
+							onChange: (e) => setTestUrl(e.target.value),
+							placeholder: "https://your-site.com/"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Nguồn (utm_source)",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
+							id: "utm-source",
+							className: "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-neutral-800",
+							defaultValue: "",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "",
+									children: "— Chọn —"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "facebook",
+									children: "Facebook"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "tiktok",
+									children: "TikTok"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "zalo",
+									children: "Zalo"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "google",
+									children: "Google"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "instagram",
+									children: "Instagram"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "messenger",
+									children: "Messenger"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "youtube",
+									children: "YouTube"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+									value: "telegram",
+									children: "Telegram"
+								})
+							]
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Kênh (utm_medium)",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							id: "utm-medium",
+							placeholder: "cpc, paid_social, email…"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+						label: "Chiến dịch (utm_campaign)",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+							id: "utm-campaign",
+							placeholder: "khoahoc_2026_hk1"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "grid grid-cols-2 gap-2",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Nội dung (utm_content)",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+								id: "utm-content",
+								placeholder: "banner_top"
+							})
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+							label: "Từ khoá (utm_term)",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+								id: "utm-term",
+								placeholder: "hoc_phi_0_dong"
+							})
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: buildUrl,
+						className: "mt-2 w-full rounded-lg bg-neutral-900 py-2.5 text-sm font-bold text-white dark:bg-white dark:text-neutral-900",
+						children: "Tạo link UTM"
+					}),
+					builtUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "mt-2 space-y-1",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "break-all rounded-lg bg-neutral-100 px-3 py-2 text-[11px] dark:bg-white/5",
+							children: builtUrl
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							onClick: () => {
+								navigator.clipboard?.writeText(builtUrl);
+							},
+							className: "text-[11px] font-bold text-sky-600",
+							children: "Sao chép link"
+						})]
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "text-[11px] leading-relaxed text-neutral-400",
+				children: "Khi khách bấm vào link UTM, hệ thống tự động ghi nhận nguồn và đính kèm vào lead. Nếu không có UTM, hệ thống nhận diện qua referrer (Facebook, TikTok, Zalo, Google…) hoặc ghi \"direct\"."
+			})
+		]
+	});
+}
 function CronModal({ onClose }) {
 	const { config, update } = useSiteConfig();
 	const a = config.admin;
+	const [testingBackup, setTestingBackup] = (0, import_react.useState)(false);
+	const [backupTestMessage, setBackupTestMessage] = (0, import_react.useState)(null);
+	const databaseReady = a.storageMode === "database" && Boolean(a.supabaseUrl);
+	const scheduleReady = a.cronSchedule === "off" || databaseReady && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.backupEmail);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(AdminModal, {
 		title: "Cloud Cron & Backup",
 		subtitle: "Gửi backup .json định kỳ qua email",
@@ -2228,6 +2479,15 @@ function CronModal({ onClose }) {
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
 					value: a.backupEmail,
 					onChange: (e) => update((d) => d.admin.backupEmail = e.target.value)
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
+				label: "Token test backup",
+				hint: "Phải trùng BACKUP_CRON_TOKEN trên Vercel; token chỉ lưu trên máy này.",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextInput, {
+					type: "password",
+					value: a.backupCronToken,
+					onChange: (e) => update((d) => d.admin.backupCronToken = e.target.value)
 				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
@@ -2249,25 +2509,35 @@ function CronModal({ onClose }) {
 				className: "text-[11px] text-neutral-400",
 				children: "Cron chạy phía Supabase Edge Function / cron-job.org khi ở Database Mode. Ở Local Mode, mỗi lần LƯU sẽ tạo snapshot backup tự động (giữ 10 bản gần nhất)."
 			}),
+			a.cronSchedule !== "off" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: `mt-2 text-xs font-semibold ${scheduleReady ? "text-amber-600" : "text-red-600"}`,
+				children: scheduleReady ? "Đã có cấu hình lịch/email. Cần triển khai Supabase Edge Function hoặc API backup để lịch thực sự gửi email." : "Chưa đủ cấu hình: cần Database Mode, Supabase URL và email nhận backup hợp lệ."
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				disabled: testingBackup || !a.backupCronToken,
+				onClick: async () => {
+					setTestingBackup(true);
+					setBackupTestMessage(null);
+					try {
+						const response = await fetch("/api/backup?test=1", { headers: { "x-backup-token": a.backupCronToken } });
+						const detail = await response.text();
+						setBackupTestMessage(`${response.status}: ${detail}`);
+					} catch (error) {
+						setBackupTestMessage(error instanceof Error ? error.message : "Không gọi được endpoint backup.");
+					} finally {
+						setTestingBackup(false);
+					}
+				},
+				className: "mb-3 rounded-lg border border-emerald-600 px-3 py-2 text-xs font-bold text-emerald-700 disabled:cursor-not-allowed disabled:opacity-40",
+				children: testingBackup ? "Đang gửi backup thử..." : "Gửi backup thử qua email"
+			}),
+			backupTestMessage && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mb-3 text-xs font-semibold text-neutral-700",
+				children: backupTestMessage
+			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveHint, {})
 		]
-	});
-}
-function InfoModal({ onClose, title, subtitle, points }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AdminModal, {
-		title,
-		subtitle,
-		onClose,
-		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-			className: "space-y-2",
-			children: points.map((p) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
-				className: "flex gap-2 rounded-lg bg-neutral-100 px-3 py-2 text-xs text-neutral-700 dark:bg-white/5 dark:text-neutral-200",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-					className: "text-emerald-500",
-					children: "✓"
-				}), p]
-			}, p))
-		})
 	});
 }
 var SECTION_LIBRARY = {
@@ -3781,16 +4051,6 @@ var REGISTRY = {
 	leads: LeadsModal,
 	webmaster: WebmasterModal,
 	pixel: PixelModal,
-	utm: (p) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InfoModal, {
-		...p,
-		title: "UTM Intelligence Hub",
-		subtitle: "Gắn nhãn nguồn traffic cho AI Sales",
-		points: [
-			"Thêm ?utm_source=..&utm_medium=..&utm_campaign=.. vào link quảng cáo.",
-			"Hệ thống tự đọc UTM, gộp vào biến traffic_ads_source gửi webhook.",
-			"AI Sales Advisor dùng nguồn UTM để chọn kịch bản tư vấn phù hợp."
-		]
-	}),
 	cron: CronModal,
 	storage: StorageModal,
 	seo: SeoModal,
@@ -3799,8 +4059,7 @@ var REGISTRY = {
 	contact: ContactModal,
 	countdown: CountdownModal,
 	adminlink: AdminLinkModal,
-	tracking: PixelModal,
-	preview: () => null
+	utm: UtmModal
 };
 function SaveHint() {
 	const { save, dirty } = useSiteConfig();
@@ -4006,6 +4265,11 @@ function RuntimeConfig() {
 		seoSchemaType
 	]);
 	(0, import_react.useEffect)(() => {
+		try {
+			captureUtm(true);
+		} catch {}
+	}, []);
+	(0, import_react.useEffect)(() => {
 		const experimentKey = `funnel_visit_counted_v2_${config.abTest.enabled ? "ab" : "plain"}_${config.abTest.split}`;
 		try {
 			if (sessionStorage.getItem(experimentKey) === "1") return;
@@ -4159,7 +4423,7 @@ function RootComponent() {
 		] }) })
 	});
 }
-var $$splitComponentImporter$2 = () => import("./routes-Dd_BKtuj.mjs");
+var $$splitComponentImporter$2 = () => import("./routes-zs6AdtTN.mjs");
 var TITLE = "Du Học Nghề Trung Quốc 0Đ | Vừa Học Vừa Làm Lương 15-30 Triệu";
 var DESC = "Du học nghề Trung Quốc học phí 0Đ: học 20% lý thuyết - 80% thực hành, lương cứng 15-30 triệu/tháng, bằng Cao đẳng chính quy quốc tế. Đăng ký nhận lộ trình miễn phí.";
 var FAQ_JSONLD = JSON.stringify({
@@ -4237,9 +4501,9 @@ var Route$2 = createFileRoute("/")({
 	}),
 	component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-var $$splitComponentImporter$1 = () => import("../_-Dc6WfJa1.mjs");
+var $$splitComponentImporter$1 = () => import("../_-B6s3vhEm.mjs");
 var Route$1 = createFileRoute("/$")({ component: lazyRouteComponent($$splitComponentImporter$1, "component") });
-var $$splitComponentImporter = () => import("./admin-D7fBVljC.mjs");
+var $$splitComponentImporter = () => import("./admin-UMQFOMcm.mjs");
 var Route = createFileRoute("/admin")({ component: lazyRouteComponent($$splitComponentImporter, "component") });
 var rootRouteChildren = {
 	IndexRoute: Route$2.update({

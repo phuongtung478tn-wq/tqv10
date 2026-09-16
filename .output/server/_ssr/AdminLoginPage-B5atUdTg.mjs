@@ -1,23 +1,19 @@
-import { n as __toESM } from "../_runtime.mjs";
+import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-hZzAbtud.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { h as useSiteConfig } from "./use-site-config-DjShPvKg.mjs";
+import { S as useSiteConfig } from "./use-site-config-DOhv-5qs.mjs";
 import { n as useAdmin } from "./use-admin-D0sSGca6.mjs";
-import { D as Lock } from "../_libs/lucide-react.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/AdminLoginPage-BIGPYb0o.js
+import { C as Lock } from "../_libs/lucide-react.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/AdminLoginPage-B5atUdTg.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 /** Màn hình đăng nhập quản trị — dùng cho /admin và đường dẫn tuỳ chỉnh. */
 function AdminLoginPage() {
 	const { authed, login } = useAdmin();
-	const { config } = useSiteConfig();
-	const [ready, setReady] = (0, import_react.useState)(false);
+	const { config, ready: configReady } = useSiteConfig();
 	const [password, setPassword] = (0, import_react.useState)("");
 	const [error, setError] = (0, import_react.useState)(false);
 	const passwordInputRef = (0, import_react.useRef)(null);
-	(0, import_react.useEffect)(() => {
-		setReady(true);
-	}, []);
 	function handleSubmit() {
 		const nextPassword = passwordInputRef.current?.value ?? password;
 		if (login(nextPassword, config.admin.password)) window.location.assign("/");
@@ -77,9 +73,9 @@ function AdminLoginPage() {
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 						type: "button",
 						onClick: handleSubmit,
-						disabled: !ready,
+						disabled: !configReady,
 						className: "w-full rounded-lg bg-white py-2.5 text-sm font-bold text-neutral-900 transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60",
-						children: "Đăng nhập"
+						children: configReady ? "Đăng nhập" : "Đang tải cấu hình..."
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 						className: "text-center text-[11px] text-white/40",

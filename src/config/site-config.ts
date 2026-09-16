@@ -677,7 +677,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
   form: {
     headline: "Đăng ký nhận tư vấn miễn phí",
     ctaLabel: "ĐĂNG KÝ NGAY",
-    webhookUrl: "https://hook.eu2.make.com/REPLACE_WITH_YOUR_WEBHOOK",
+    webhookUrl: "https://hook.us2.make.com/jtwmjkp2t8wrlr4f080ppgc84u3e53aa",
     redirectUrl: "",
     rateLimitCount: 3,
     rateLimitWindowMin: 5,

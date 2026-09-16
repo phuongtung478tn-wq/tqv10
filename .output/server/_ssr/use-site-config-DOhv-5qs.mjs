@@ -1,7 +1,9 @@
-import { n as __toESM } from "../_runtime.mjs";
+import { r as __toESM, t as getServerFnById } from "../__23tanstack-start-server-fn-resolver-hZzAbtud.mjs";
+import { c as createServerFn, i as TSS_SERVER_FUNCTION } from "./createServerFn-CIHAFgYl.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-DjShPvKg.js
+import { a as unknownType, i as stringType, n as objectType, r as recordType } from "../_libs/zod.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/use-site-config-DOhv-5qs.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var DEFAULT_CONFIG = {
@@ -12,7 +14,8 @@ var DEFAULT_CONFIG = {
 		supabaseUrl: "",
 		supabaseAnonKey: "",
 		backupEmail: "",
-		cronSchedule: "off"
+		cronSchedule: "off",
+		backupCronToken: ""
 	},
 	pages: [{
 		id: "home",
@@ -409,6 +412,7 @@ var DEFAULT_CONFIG = {
 	countdown: {
 		enabled: true,
 		slotsLeft: 12,
+		autoDecrement: true,
 		headline: "suất học bổng miễn 100% KTX tháng này",
 		endMode: "endOfMonth",
 		endDate: ""
@@ -441,7 +445,7 @@ var DEFAULT_CONFIG = {
 	form: {
 		headline: "Đăng ký nhận tư vấn miễn phí",
 		ctaLabel: "ĐĂNG KÝ NGAY",
-		webhookUrl: "https://hook.eu2.make.com/REPLACE_WITH_YOUR_WEBHOOK",
+		webhookUrl: "https://hook.us2.make.com/jtwmjkp2t8wrlr4f080ppgc84u3e53aa",
 		redirectUrl: "",
 		rateLimitCount: 3,
 		rateLimitWindowMin: 5,
@@ -489,15 +493,29 @@ var DEFAULT_CONFIG = {
 		keyRegions: "Nghệ An|Hà Tĩnh|Quảng Bình|Thanh Hóa|Quảng Ninh|Hải Phòng",
 		fastFillThresholdSec: 4,
 		vipTimeOnPageSec: 80,
-		vipScrollPercent: 70
+		vipScrollPercent: 70,
+		weightDevice: 20,
+		weightRegion: 15,
+		weightFastFill: 15,
+		weightTimeOnPage: 20,
+		weightScroll: 15,
+		weightReturnVisit: 15,
+		callScriptTemplate: "Chào {name}, em gọi từ chương trình du học nghề Trung Quốc. Em thấy anh/chị ở {city}, quan tâm ngành {major}. Dựa trên hành vi online, em đánh giá khách là {ai_rank} (score {ai_score}). Gợi ý: {sale_advice}"
 	},
 	webhooks: [],
 	emailAutomation: {
 		enabled: false,
 		provider: "resend",
 		fromEmail: "",
+		notifyEmail: "",
+		resendApiKey: "",
+		gmailClientId: "",
+		gmailClientSecret: "",
+		gmailRefreshToken: "",
 		subject: "Cảm ơn {name} đã đăng ký tư vấn du học nghề Trung Quốc",
-		body: "Chào {name},\n\nCảm ơn bạn đã để lại thông tin. Đội ngũ tư vấn sẽ liên hệ số {phone} trong thời gian sớm nhất.\n\nTrân trọng."
+		body: "Chào {name},\n\nCảm ơn bạn đã để lại thông tin. Đội ngũ tư vấn sẽ liên hệ số {phone} trong thời gian sớm nhất.\n\nTrân trọng.",
+		notifySubject: "[Lead mới] {name} — {phone} — {city}",
+		notifyBody: "Lead mới vừa đăng ký:\n\nHọ tên: {name}\nSĐT: {phone}\nTỉnh: {city}\nNgành: {major}\nAI Score: {ai_score}\nNguồn: {source}"
 	},
 	abTest: {
 		enabled: false,
@@ -510,6 +528,24 @@ var DEFAULT_CONFIG = {
 		variantBCta: ""
 	}
 };
+var createSsrRpc = (functionId) => {
+	const url = "/_serverFn/" + functionId;
+	const serverFnMeta = { id: functionId };
+	const fn = async (...args) => {
+		return (await getServerFnById(functionId, { origin: "server" }))(...args);
+	};
+	return Object.assign(fn, {
+		url,
+		serverFnMeta,
+		[TSS_SERVER_FUNCTION]: true
+	});
+};
+var relaySchema = objectType({
+	endpoint: stringType().url(),
+	body: unknownType(),
+	headers: recordType(stringType(), stringType()).optional()
+});
+var relayWebhook = createServerFn({ method: "POST" }).validator((data) => relaySchema.parse(data)).handler(createSsrRpc("95e6712f6ffd450a883eaa218493fa3addd9c46fc4e357a506533ee0a8508e68"));
 /**
 * HYBRID STORAGE ADAPTER
 * ----------------------
@@ -525,6 +561,10 @@ var BACKUP_KEY = "funnel_backup_snapshots_v1";
 var LEAD_CREATED_EVENT = "funnel:lead-created";
 var ANALYTICS_UPDATED_EVENT = "funnel:analytics-updated";
 var CLOUD_CONFIG_TABLE = "funnel_configs";
+var CLOUD_ANALYTICS_TABLE = "funnel_analytics";
+var LOCAL_MIGRATION_KEY = "funnel_supabase_migrated_leads_v1";
+var REMOTE_LEAD_TIMEOUT_MS = 3e3;
+var REMOTE_DUPLICATE_TIMEOUT_MS = 1500;
 function isRecord(value) {
 	return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
@@ -553,6 +593,18 @@ function mergeConfig(base, override) {
 function isBrowser() {
 	return typeof window !== "undefined";
 }
+function preserveLocalSecrets(merged, local) {
+	merged.admin.supabaseUrl = local.admin.supabaseUrl;
+	merged.admin.supabaseAnonKey = local.admin.supabaseAnonKey;
+	merged.admin.storageMode = local.admin.storageMode;
+	merged.admin.backupCronToken = local.admin.backupCronToken;
+	merged.emailAutomation.resendApiKey = local.emailAutomation.resendApiKey;
+	merged.emailAutomation.gmailClientId = local.emailAutomation.gmailClientId;
+	merged.emailAutomation.gmailClientSecret = local.emailAutomation.gmailClientSecret;
+	merged.emailAutomation.gmailRefreshToken = local.emailAutomation.gmailRefreshToken;
+	merged.tracking.tiktokAccessToken = local.tracking.tiktokAccessToken;
+	return merged;
+}
 function loadConfig() {
 	if (!isBrowser()) return structuredClone(DEFAULT_CONFIG);
 	try {
@@ -575,17 +627,20 @@ async function loadCloudConfig(config) {
 		const rows = await response.json();
 		if (!Array.isArray(rows) || !isRecord(rows[0])) return null;
 		const data = rows[0]["data"];
-		return isRecord(data) ? mergeConfig(DEFAULT_CONFIG, data) : null;
+		if (!isRecord(data)) return null;
+		return preserveLocalSecrets(mergeConfig(config, data), config);
 	} catch {
 		return null;
 	}
 }
 function saveConfig(config) {
 	if (!isBrowser()) return;
+	let localSaved = true;
 	try {
 		window.localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
 	} catch {
-		return;
+		localSaved = false;
+		console.warn("LocalStorage config save failed; continuing with Supabase sync.");
 	}
 	try {
 		const snaps = JSON.parse(window.localStorage.getItem(BACKUP_KEY) || "[]");
@@ -596,6 +651,7 @@ function saveConfig(config) {
 		window.localStorage.setItem(BACKUP_KEY, JSON.stringify(snaps.slice(0, 10)));
 	} catch {}
 	if (config.admin.storageMode === "database" && config.admin.supabaseUrl && config.admin.supabaseAnonKey) syncConfigToSupabase(config);
+	if (!localSaved && config.admin.storageMode !== "database") console.warn("Config is not persisted locally because Database Mode is disabled.");
 }
 function resetConfig() {
 	if (isBrowser()) window.localStorage.removeItem(CONFIG_KEY);
@@ -610,6 +666,64 @@ function exportConfigFile(config) {
 	a.href = url;
 	a.download = "site-config.export.js";
 	a.click();
+	URL.revokeObjectURL(url);
+}
+function sqlJson(value) {
+	return `'${JSON.stringify(value).replace(/'/g, "''")}'::jsonb`;
+}
+function exportSupabaseSql(config) {
+	if (!isBrowser()) return;
+	const cloudConfig = structuredClone(config);
+	cloudConfig.admin.supabaseAnonKey = "";
+	cloudConfig.admin.backupCronToken = "";
+	cloudConfig.emailAutomation.resendApiKey = "";
+	cloudConfig.emailAutomation.gmailClientId = "";
+	cloudConfig.emailAutomation.gmailClientSecret = "";
+	cloudConfig.emailAutomation.gmailRefreshToken = "";
+	cloudConfig.tracking.tiktokAccessToken = "";
+	const analytics = loadAnalytics();
+	const sql = `-- Generated by Funnel Builder. Secrets are intentionally omitted.
+create extension if not exists pgcrypto;
+
+create table if not exists public.funnel_configs (id bigint primary key, data jsonb not null, updated_at timestamptz not null default now());
+alter table public.funnel_configs enable row level security;
+drop policy if exists "funnel configs can be read" on public.funnel_configs;
+create policy "funnel configs can be read" on public.funnel_configs for select using (true);
+drop policy if exists "funnel configs can be written" on public.funnel_configs;
+create policy "funnel configs can be written" on public.funnel_configs for insert with check (id = 1);
+drop policy if exists "funnel configs can be updated" on public.funnel_configs;
+create policy "funnel configs can be updated" on public.funnel_configs for update using (id = 1) with check (id = 1);
+
+create table if not exists public.funnel_analytics (id bigint primary key, data jsonb not null, updated_at timestamptz not null default now());
+alter table public.funnel_analytics enable row level security;
+drop policy if exists "funnel analytics can be read" on public.funnel_analytics;
+create policy "funnel analytics can be read" on public.funnel_analytics for select using (true);
+drop policy if exists "funnel analytics can be written" on public.funnel_analytics;
+create policy "funnel analytics can be written" on public.funnel_analytics for insert with check (id = 1);
+drop policy if exists "funnel analytics can be updated" on public.funnel_analytics;
+create policy "funnel analytics can be updated" on public.funnel_analytics for update using (id = 1) with check (id = 1);
+
+create table if not exists public.leads (id uuid primary key default gen_random_uuid(), created_at timestamptz not null default now(), name text, phone text, email text, city text, major text, ai_score int, ai_rank text, risk_level text, risk_reasons text[], recommended_action text, behavior_summary text, sale_advice text, device_tech_info text, traffic_ads_source text, network_provider text, network_label text, current_session int, visits_today int, visits_month int, utm_source text, utm_medium text, utm_campaign text, utm_content text, utm_term text, fbclid text, ttclid text, gclid text, raw_query text, referrer text, attribution_model text, attribution_detected_by text, utm_params jsonb, variant text, landing_url text, device_manufacturer text, device_family text, device_model text, operating_system text, browser text, visitor_behavior_payload jsonb);
+alter table public.leads enable row level security;
+drop policy if exists "leads can be created by public form" on public.leads;
+create policy "leads can be created by public form" on public.leads for insert with check (true);
+
+create table if not exists public.visitor_sessions (id text primary key, visitor_id text not null, visited_day date not null, visited_month text not null, source text, medium text, campaign text, content text, device_model text, device_kind text, os text, browser text, created_at timestamptz not null default now());
+alter table public.visitor_sessions enable row level security;
+drop policy if exists "visitor sessions can be created by public form" on public.visitor_sessions;
+create policy "visitor sessions can be created by public form" on public.visitor_sessions for insert with check (true);
+drop policy if exists "visitor sessions can be counted by public form" on public.visitor_sessions;
+create policy "visitor sessions can be counted by public form" on public.visitor_sessions for select using (true);
+
+insert into public.funnel_configs (id, data, updated_at) values (1, ${sqlJson(cloudConfig)}, now()) on conflict (id) do update set data = excluded.data, updated_at = excluded.updated_at;
+insert into public.funnel_analytics (id, data, updated_at) values (1, ${sqlJson(analytics)}, now()) on conflict (id) do update set data = excluded.data, updated_at = excluded.updated_at;
+`;
+	const blob = new Blob([sql], { type: "application/sql;charset=utf-8" });
+	const url = URL.createObjectURL(blob);
+	const anchor = document.createElement("a");
+	anchor.href = url;
+	anchor.download = `supabase-funnel-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.sql`;
+	anchor.click();
 	URL.revokeObjectURL(url);
 }
 /**
@@ -635,10 +749,49 @@ function loadLeads() {
 		return [];
 	}
 }
+function cacheLeadLocally(record) {
+	if (!isBrowser()) return;
+	try {
+		const leads = loadLeads();
+		leads.unshift(record);
+		window.localStorage.setItem(LEADS_KEY, JSON.stringify(leads.slice(0, 500)));
+		window.dispatchEvent(new CustomEvent(LEAD_CREATED_EVENT, { detail: record }));
+	} catch {}
+}
 /** Trùng lặp: cùng số điện thoại đã gửi trong 24 giờ gần nhất. */
 function isDuplicateLead(phone) {
 	const cutoff = Date.now() - 864e5;
 	return loadLeads().some((l) => l.phone === phone && new Date(l.at).getTime() > cutoff);
+}
+/** Trùng lặp từ xa: kiểm tra Supabase trong Database Mode. */
+async function isDuplicateLeadRemote(phone, config) {
+	if (!isBrowser() || config?.admin.storageMode !== "database" || !config.admin.supabaseUrl || !config.admin.supabaseAnonKey) return false;
+	try {
+		const cutoff = (/* @__PURE__ */ new Date(Date.now() - 864e5)).toISOString();
+		const controller = new AbortController();
+		const timer = window.setTimeout(() => controller.abort(), REMOTE_DUPLICATE_TIMEOUT_MS);
+		const url = `${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/leads?phone=eq.${encodeURIComponent(phone)}&created_at=gte.${cutoff}&select=id`;
+		try {
+			const res = await fetch(url, {
+				headers: {
+					apikey: config.admin.supabaseAnonKey,
+					Authorization: `Bearer ${config.admin.supabaseAnonKey}`
+				},
+				signal: controller.signal
+			});
+			if (!res.ok) {
+				console.warn(`isDuplicateLeadRemote: Supabase returned ${res.status}`);
+				return false;
+			}
+			const rows = await res.json();
+			return Array.isArray(rows) && rows.length > 0;
+		} finally {
+			window.clearTimeout(timer);
+		}
+	} catch (err) {
+		console.warn("isDuplicateLeadRemote: network error, allowing submit", err.message);
+		return false;
+	}
 }
 function clearLeads() {
 	if (!isBrowser()) return;
@@ -654,62 +807,101 @@ async function saveLead(lead, config) {
 		...lead,
 		storage: mode
 	};
+	cacheLeadLocally(record);
 	if (mode === "database" && config) {
 		if (!await pushLeadToSupabase(record, config.admin.supabaseUrl, config.admin.supabaseAnonKey)) record.storage = "local";
-	}
-	if (isBrowser()) {
-		const leads = loadLeads();
-		leads.unshift(record);
-		window.localStorage.setItem(LEADS_KEY, JSON.stringify(leads.slice(0, 500)));
-		window.dispatchEvent(new CustomEvent(LEAD_CREATED_EVENT, { detail: record }));
 	}
 	return record;
 }
 async function pushLeadToSupabase(lead, url, key) {
+	const controller = new AbortController();
+	const timer = window.setTimeout(() => controller.abort(), REMOTE_LEAD_TIMEOUT_MS);
 	try {
-		return (await fetch(`${url.replace(/\/$/, "")}/rest/v1/leads`, {
+		const endpoint = `${url.replace(/\/$/, "")}/rest/v1/leads`;
+		const headers = {
+			"Content-Type": "application/json",
+			apikey: key,
+			Authorization: `Bearer ${key}`,
+			Prefer: "return=minimal"
+		};
+		const row = {
+			name: lead.name,
+			phone: lead.phone,
+			email: lead.email ?? null,
+			city: lead.city ?? null,
+			major: lead.major ?? null,
+			ai_score: lead.aiScore ?? null,
+			ai_rank: lead.aiRank ?? null,
+			risk_level: lead.riskLevel ?? null,
+			risk_reasons: lead.riskReasons ?? null,
+			recommended_action: lead.recommendedAction ?? null,
+			behavior_summary: lead.behaviorSummary ?? null,
+			sale_advice: lead.saleAdvice ?? null,
+			device_tech_info: lead.deviceTechInfo ?? null,
+			traffic_ads_source: lead.trafficAdsSource ?? null,
+			network_provider: lead.networkProvider ?? null,
+			network_label: lead.networkLabel ?? null,
+			current_session: lead.currentSession ?? null,
+			visits_today: lead.visitsToday ?? null,
+			visits_month: lead.visitsMonth ?? null,
+			utm_source: lead.utmSource ?? null,
+			utm_medium: lead.utmMedium ?? null,
+			utm_campaign: lead.utmCampaign ?? null,
+			utm_content: lead.utmContent ?? null,
+			utm_term: lead.utmTerm ?? null,
+			fbclid: lead.fbclid ?? null,
+			ttclid: lead.ttclid ?? null,
+			gclid: lead.gclid ?? null,
+			raw_query: lead.rawQuery ?? null,
+			referrer: lead.referrer ?? null,
+			attribution_model: lead.attributionModel ?? null,
+			attribution_detected_by: lead.attributionDetectedBy ?? null,
+			utm_params: lead.utmParams ?? null,
+			variant: lead.variant ?? null,
+			landing_url: lead.landing_url ?? null,
+			device_manufacturer: lead.deviceManufacturer ?? null,
+			device_family: lead.deviceFamily ?? null,
+			device_model: lead.deviceModel ?? null,
+			operating_system: lead.operatingSystem ?? null,
+			browser: lead.browser ?? null,
+			visitor_behavior_payload: lead.visitorBehaviorPayload ?? null,
+			created_at: lead.at
+		};
+		if ((await relayWebhook({ data: {
+			endpoint,
+			body: [row],
+			headers
+		} })).ok) return true;
+		const res = await fetch(endpoint, {
 			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				apikey: key,
-				Authorization: `Bearer ${key}`,
-				Prefer: "return=minimal"
-			},
-			body: JSON.stringify([{
-				name: lead.name,
-				phone: lead.phone,
-				email: lead.email ?? null,
-				city: lead.city ?? null,
-				major: lead.major ?? null,
-				ai_score: lead.aiScore ?? null,
-				ai_rank: lead.aiRank ?? null,
-				risk_level: lead.riskLevel ?? null,
-				risk_reasons: lead.riskReasons ?? null,
-				recommended_action: lead.recommendedAction ?? null,
-				lead_behavior_summary: lead.behaviorSummary ?? null,
-				behavior_summary: lead.behaviorSummary ?? null,
-				sale_advice: lead.saleAdvice ?? null,
-				device_summary: lead.deviceTechInfo ?? null,
-				device_tech_info: lead.deviceTechInfo ?? null,
-				utm_traffic_source: lead.trafficAdsSource ?? null,
-				traffic_ads_source: lead.trafficAdsSource ?? null,
-				network_provider: lead.networkProvider ?? null,
-				network_label: lead.networkLabel ?? null,
-				current_session: lead.currentSession ?? null,
-				visits_today: lead.visitsToday ?? null,
-				visits_month: lead.visitsMonth ?? null,
-				utm_source: lead.utmSource ?? null,
-				utm_medium: lead.utmMedium ?? null,
-				utm_campaign: lead.utmCampaign ?? null,
-				utm_content: lead.utmContent ?? null,
-				ttclid: lead.ttclid ?? null,
-				variant: lead.variant ?? null,
-				visitor_behavior_payload: lead.visitorBehaviorPayload ?? null,
-				created_at: lead.at
-			}])
-		})).ok;
+			headers,
+			keepalive: true,
+			signal: controller.signal,
+			body: JSON.stringify([row])
+		});
+		if (!res.ok && res.status >= 400 && res.status < 500) {
+			const legacy = { ...row };
+			delete legacy.utm_term;
+			delete legacy.fbclid;
+			delete legacy.gclid;
+			delete legacy.raw_query;
+			delete legacy.referrer;
+			delete legacy.attribution_model;
+			delete legacy.attribution_detected_by;
+			delete legacy.utm_params;
+			return (await fetch(endpoint, {
+				method: "POST",
+				headers,
+				keepalive: true,
+				signal: controller.signal,
+				body: JSON.stringify([legacy])
+			})).ok;
+		}
+		return res.ok;
 	} catch {
 		return false;
+	} finally {
+		window.clearTimeout(timer);
 	}
 }
 function exportLeadsCsv(leads) {
@@ -740,7 +932,13 @@ function exportLeadsCsv(leads) {
 		"utmCampaign",
 		"utmContent",
 		"ttclid",
-		"variant"
+		"variant",
+		"landing_url",
+		"deviceManufacturer",
+		"deviceFamily",
+		"deviceModel",
+		"operatingSystem",
+		"browser"
 	];
 	const rows = leads.map((l) => headers.map((h) => `"${String(l[h] ?? "").replace(/"/g, "\"\"")}"`).join(","));
 	const csv = [headers.join(","), ...rows].join("\n");
@@ -801,6 +999,43 @@ function saveAnalytics(state) {
 	if (!isBrowser()) return;
 	window.localStorage.setItem(ANALYTICS_KEY, JSON.stringify(state));
 	window.dispatchEvent(new CustomEvent(ANALYTICS_UPDATED_EVENT, { detail: state }));
+	const config = loadConfig();
+	if (config.admin.storageMode === "database" && config.admin.supabaseUrl && config.admin.supabaseAnonKey) syncAnalyticsToSupabase(state, config);
+}
+async function syncAnalyticsToSupabase(state, config) {
+	try {
+		return (await fetch(`${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/${CLOUD_ANALYTICS_TABLE}?on_conflict=id`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Prefer: "resolution=merge-duplicates,return=minimal",
+				apikey: config.admin.supabaseAnonKey,
+				Authorization: `Bearer ${config.admin.supabaseAnonKey}`
+			},
+			body: JSON.stringify([{
+				id: 1,
+				data: state,
+				updated_at: (/* @__PURE__ */ new Date()).toISOString()
+			}])
+		})).ok;
+	} catch {
+		return false;
+	}
+}
+async function loadCloudAnalytics(config) {
+	if (!isBrowser() || config.admin.storageMode !== "database" || !config.admin.supabaseUrl || !config.admin.supabaseAnonKey) return null;
+	try {
+		const response = await fetch(`${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/${CLOUD_ANALYTICS_TABLE}?id=eq.1&select=data`, { headers: {
+			apikey: config.admin.supabaseAnonKey,
+			Authorization: `Bearer ${config.admin.supabaseAnonKey}`
+		} });
+		if (!response.ok) return null;
+		const rows = await response.json();
+		if (!Array.isArray(rows) || !isRecord(rows[0])) return null;
+		return normalizeAnalytics(rows[0].data);
+	} catch {
+		return null;
+	}
 }
 function trackVisit(source, variant) {
 	const a = loadAnalytics();
@@ -847,8 +1082,18 @@ function clearAnalytics() {
 }
 /** Ghi config vào bảng `site_config` (id=1) qua Supabase REST. Best-effort. */
 async function syncConfigToSupabase(config) {
+	const controller = new AbortController();
+	const timer = window.setTimeout(() => controller.abort(), 5e3);
 	try {
 		const { supabaseUrl, supabaseAnonKey } = config.admin;
+		const cloudConfig = structuredClone(config);
+		cloudConfig.admin.supabaseAnonKey = "";
+		cloudConfig.admin.backupCronToken = "";
+		cloudConfig.emailAutomation.resendApiKey = "";
+		cloudConfig.emailAutomation.gmailClientId = "";
+		cloudConfig.emailAutomation.gmailClientSecret = "";
+		cloudConfig.emailAutomation.gmailRefreshToken = "";
+		cloudConfig.tracking.tiktokAccessToken = "";
 		const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/${CLOUD_CONFIG_TABLE}?on_conflict=id`, {
 			method: "POST",
 			headers: {
@@ -859,36 +1104,129 @@ async function syncConfigToSupabase(config) {
 			},
 			body: JSON.stringify([{
 				id: 1,
-				data: config,
+				data: cloudConfig,
 				updated_at: (/* @__PURE__ */ new Date()).toISOString()
-			}])
+			}]),
+			signal: controller.signal
 		});
 		if (!response.ok) console.warn(`Supabase config sync failed [${response.status}]`);
 	} catch (err) {
 		console.warn("Supabase config sync failed:", err.message);
+	} finally {
+		window.clearTimeout(timer);
 	}
 }
-async function testSupabaseConnection(url, key) {
+/** Đẩy config và các lead LocalStorage lên Supabase, không xóa dữ liệu local. */
+async function migrateLocalDataToSupabase(config) {
+	const result = {
+		configSynced: false,
+		analyticsSynced: false,
+		leadsFound: 0,
+		leadsUploaded: 0,
+		leadsSkipped: 0,
+		leadsFailed: 0
+	};
+	if (!isBrowser() || config.admin.storageMode !== "database" || !config.admin.supabaseUrl || !config.admin.supabaseAnonKey) return result;
+	result.configSynced = (await fetch(`${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/${CLOUD_CONFIG_TABLE}?on_conflict=id`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Prefer: "resolution=merge-duplicates,return=minimal",
+			apikey: config.admin.supabaseAnonKey,
+			Authorization: `Bearer ${config.admin.supabaseAnonKey}`
+		},
+		body: JSON.stringify([{
+			id: 1,
+			data: (() => {
+				const cloudConfig = structuredClone(config);
+				cloudConfig.admin.supabaseAnonKey = "";
+				cloudConfig.admin.backupCronToken = "";
+				cloudConfig.emailAutomation.resendApiKey = "";
+				cloudConfig.emailAutomation.gmailClientId = "";
+				cloudConfig.emailAutomation.gmailClientSecret = "";
+				cloudConfig.emailAutomation.gmailRefreshToken = "";
+				cloudConfig.tracking.tiktokAccessToken = "";
+				return cloudConfig;
+			})(),
+			updated_at: (/* @__PURE__ */ new Date()).toISOString()
+		}])
+	})).ok;
+	result.analyticsSynced = await syncAnalyticsToSupabase(loadAnalytics(), config);
+	const migrated = /* @__PURE__ */ new Set();
 	try {
-		const res = await fetch(`${url.replace(/\/$/, "")}/rest/v1/`, { headers: {
-			apikey: key,
-			Authorization: `Bearer ${key}`
+		const raw = window.localStorage.getItem(LOCAL_MIGRATION_KEY);
+		for (const id of raw ? JSON.parse(raw) : []) if (typeof id === "string") migrated.add(id);
+	} catch {}
+	const leads = loadLeads();
+	result.leadsFound = leads.length;
+	for (const lead of leads) {
+		if (migrated.has(lead.id)) {
+			result.leadsSkipped += 1;
+			continue;
+		}
+		if (await pushLeadToSupabase(lead, config.admin.supabaseUrl, config.admin.supabaseAnonKey)) {
+			migrated.add(lead.id);
+			result.leadsUploaded += 1;
+		} else result.leadsFailed += 1;
+	}
+	try {
+		window.localStorage.setItem(LOCAL_MIGRATION_KEY, JSON.stringify([...migrated].slice(-1e3)));
+	} catch {}
+	return result;
+}
+async function testSupabaseConnection(url, key) {
+	const normalizedUrl = url.trim().replace(/\/$/, "");
+	const normalizedKey = key.trim();
+	if (!/^https:\/\/[^/]+\.supabase\.co$/i.test(normalizedUrl)) return {
+		ok: false,
+		reason: "invalid_url"
+	};
+	if (!normalizedKey) return {
+		ok: false,
+		reason: "unauthorized"
+	};
+	try {
+		const res = await fetch(`${normalizedUrl}/rest/v1/${CLOUD_CONFIG_TABLE}?select=id&limit=1`, { headers: {
+			apikey: normalizedKey,
+			Authorization: `Bearer ${normalizedKey}`
 		} });
-		return res.ok || res.status === 404;
+		if (res.ok) return {
+			ok: true,
+			schemaReady: true
+		};
+		if (res.status === 404) {
+			if ((await res.text().catch(() => "")).includes("PGRST205")) return {
+				ok: true,
+				schemaReady: false,
+				reason: "missing_schema"
+			};
+		}
+		if (res.status === 401 || res.status === 403) return {
+			ok: false,
+			reason: "unauthorized"
+		};
+		return {
+			ok: false,
+			reason: "network"
+		};
 	} catch {
-		return false;
+		return {
+			ok: false,
+			reason: "network"
+		};
 	}
 }
 var SiteConfigContext = (0, import_react.createContext)(null);
 function SiteConfigProvider({ children }) {
 	const [config, setConfig] = (0, import_react.useState)(DEFAULT_CONFIG);
 	const [dirty, setDirty] = (0, import_react.useState)(false);
+	const [ready, setReady] = (0, import_react.useState)(false);
 	(0, import_react.useEffect)(() => {
 		const localConfig = loadConfig();
 		setConfig(localConfig);
 		loadCloudConfig(localConfig).then((cloudConfig) => {
 			if (cloudConfig) setConfig(cloudConfig);
-		});
+		}).finally(() => setReady(true));
 	}, []);
 	const update = (0, import_react.useCallback)((patch) => {
 		setConfig((prev) => {
@@ -938,7 +1276,8 @@ function SiteConfigProvider({ children }) {
 		resetLanding,
 		exportFile,
 		importConfig,
-		dirty
+		dirty,
+		ready
 	}), [
 		config,
 		update,
@@ -947,7 +1286,8 @@ function SiteConfigProvider({ children }) {
 		resetLanding,
 		exportFile,
 		importConfig,
-		dirty
+		dirty,
+		ready
 	]);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SiteConfigContext.Provider, {
 		value,
@@ -960,4 +1300,4 @@ function useSiteConfig() {
 	return ctx;
 }
 //#endregion
-export { clearAnalytics as a, isDuplicateLead as c, saveLead as d, testSupabaseConnection as f, useSiteConfig as h, SiteConfigProvider as i, loadAnalytics as l, trackVisit as m, DEFAULT_CONFIG as n, clearLeads as o, trackConversion as p, LEAD_CREATED_EVENT as r, exportLeadsCsv as s, ANALYTICS_UPDATED_EVENT as t, loadLeads as u };
+export { useSiteConfig as S, relayWebhook as _, clearAnalytics as a, trackConversion as b, exportConfigFile as c, isDuplicateLead as d, isDuplicateLeadRemote as f, migrateLocalDataToSupabase as g, loadLeads as h, SiteConfigProvider as i, exportLeadsCsv as l, loadCloudAnalytics as m, DEFAULT_CONFIG as n, clearLeads as o, loadAnalytics as p, LEAD_CREATED_EVENT as r, createSsrRpc as s, ANALYTICS_UPDATED_EVENT as t, exportSupabaseSql as u, saveLead as v, trackVisit as x, testSupabaseConnection as y };

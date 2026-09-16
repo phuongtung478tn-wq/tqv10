@@ -1,8 +1,8 @@
-import { n as __toESM } from "../_runtime.mjs";
+import { r as __toESM } from "../__23tanstack-start-server-fn-resolver-hZzAbtud.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { h as useSiteConfig } from "./use-site-config-DjShPvKg.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/ContentSection-BWsPqEdY.js
+import { S as useSiteConfig, r as LEAD_CREATED_EVENT } from "./use-site-config-DOhv-5qs.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/ContentSection--qi-6Kti.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function endOfMonth() {
@@ -14,7 +14,7 @@ function pad(n) {
 }
 /** Đếm ngược + số suất còn lại, lấy trực tiếp từ cấu hình Admin. */
 function ScarcityBar({ tone = "light" }) {
-	const { config } = useSiteConfig();
+	const { config, update, save } = useSiteConfig();
 	const c = config.countdown;
 	const [left, setLeft] = (0, import_react.useState)(null);
 	const target = c.endMode === "fixed" && c.endDate ? new Date(c.endDate).getTime() : endOfMonth();
@@ -25,11 +25,39 @@ function ScarcityBar({ tone = "light" }) {
 		const id = window.setInterval(tick, 1e3);
 		return () => window.clearInterval(id);
 	}, [validTarget]);
-	if (!c.enabled) return null;
+	(0, import_react.useEffect)(() => {
+		if (!c.enabled || c.autoDecrement === false) return;
+		const onLeadCreated = () => {
+			if (c.slotsLeft <= 0) return;
+			update((d) => {
+				d.countdown.slotsLeft = Math.max(0, d.countdown.slotsLeft - 1);
+			});
+			save();
+		};
+		window.addEventListener(LEAD_CREATED_EVENT, onLeadCreated);
+		return () => window.removeEventListener(LEAD_CREATED_EVENT, onLeadCreated);
+	}, [
+		c.enabled,
+		c.autoDecrement,
+		c.slotsLeft,
+		update,
+		save
+	]);
 	const d = left === null ? 0 : Math.floor(left / 864e5);
 	const h = left === null ? 0 : Math.floor(left % 864e5 / 36e5);
 	const m = left === null ? 0 : Math.floor(left % 36e5 / 6e4);
 	const s = left === null ? 0 : Math.floor(left % 6e4 / 1e3);
+	const displaySlots = (() => {
+		if (!c.enabled) return c.slotsLeft;
+		const maxSlots = c.slotsLeft;
+		if (maxSlots <= 0) return 0;
+		const totalSeconds = d * 86400 + h * 3600 + m * 60 + s;
+		const ratio = Math.min(1, totalSeconds / 2592e3);
+		const fluctuation = Math.floor(Math.sin(Date.now() / 3e5) * 1.5 + Math.cos(Date.now() / 47e4) * 1);
+		const dynamic = Math.round(maxSlots * (.15 + ratio * .85)) + fluctuation;
+		return Math.max(1, Math.min(maxSlots, dynamic));
+	})();
+	if (!c.enabled) return null;
 	const dark = tone === "dark";
 	const box = dark ? "bg-surface-foreground/10 text-surface-foreground ring-surface-foreground/20" : "bg-card text-card-foreground ring-border";
 	const accent = dark ? "text-gold" : "text-primary";
@@ -44,7 +72,7 @@ function ScarcityBar({ tone = "light" }) {
 				" ",
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 					className: accent,
-					children: [c.slotsLeft.toString().padStart(2, "0"), " suất"]
+					children: [displaySlots.toString().padStart(2, "0"), " suất"]
 				}),
 				" ",
 				c.headline
