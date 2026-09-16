@@ -12,6 +12,7 @@ import {
   ANALYTICS_UPDATED_EVENT,
   LEAD_CREATED_EVENT,
   exportLeadsCsv,
+  exportConfigFile,
   loadAnalytics,
   loadCloudAnalytics,
   loadLeads,
@@ -738,13 +739,6 @@ function SeoModal({ onClose }: ModalProps) {
             className="rounded-lg border border-neutral-300 px-3 py-2 text-xs font-bold"
           >
             Chọn favicon
-          </button>
-          <button
-            type="button"
-            onClick={() => exportSupabaseSql(config)}
-            className="mb-3 rounded-lg border border-neutral-700 px-3 py-2 text-xs font-bold text-neutral-700"
-          >
-            Xuất SQL cấu hình Supabase
           </button>
         </div>
       </Field>
@@ -1723,6 +1717,22 @@ function StorageModal({ onClose }: ModalProps) {
               {migration}
             </p>
           )}
+          <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => exportConfigFile(config)}
+              className="rounded-lg border border-neutral-700 px-3 py-2 text-xs font-bold text-neutral-700"
+            >
+              Xuất config local
+            </button>
+            <button
+              type="button"
+              onClick={() => exportSupabaseSql(config)}
+              className="rounded-lg border border-sky-700 px-3 py-2 text-xs font-bold text-sky-700"
+            >
+              Xuất SQL Supabase
+            </button>
+          </div>
         </>
       )}
       <SaveHint />
