@@ -321,9 +321,7 @@ function ThemeModal({ onClose }: ModalProps) {
       <Field label="Font nội dung">
         <select
           value={t.fontBody}
-          onChange={(e) =>
-            update((d) => (d.theme.fontBody = e.target.value))
-          }
+          onChange={(e) => update((d) => (d.theme.fontBody = e.target.value))}
           className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-white/20 dark:bg-white/5"
         >
           <option value="Be Vietnam Pro">Be Vietnam Pro</option>
@@ -812,29 +810,75 @@ function AiModal({ onClose }: ModalProps) {
           />
         </Field>
       </div>
-      <p className="mt-3 mb-1 text-xs font-bold text-neutral-700">Trọng số chấm điểm (tổng 100)</p>
+      <p className="mt-3 mb-1 text-xs font-bold text-neutral-700">
+        Trọng số chấm điểm (tổng 100)
+      </p>
       <div className="grid grid-cols-3 gap-2">
         <Field label="Thiết bị VIP">
-          <TextInput type="number" value={a.weightDevice} onChange={(e) => update((d) => (d.aiAdvisor.weightDevice = +e.target.value))} />
+          <TextInput
+            type="number"
+            value={a.weightDevice}
+            onChange={(e) =>
+              update((d) => (d.aiAdvisor.weightDevice = +e.target.value))
+            }
+          />
         </Field>
         <Field label="Tỉnh trọng điểm">
-          <TextInput type="number" value={a.weightRegion} onChange={(e) => update((d) => (d.aiAdvisor.weightRegion = +e.target.value))} />
+          <TextInput
+            type="number"
+            value={a.weightRegion}
+            onChange={(e) =>
+              update((d) => (d.aiAdvisor.weightRegion = +e.target.value))
+            }
+          />
         </Field>
         <Field label="Điền nhanh (bot)">
-          <TextInput type="number" value={a.weightFastFill} onChange={(e) => update((d) => (d.aiAdvisor.weightFastFill = +e.target.value))} />
+          <TextInput
+            type="number"
+            value={a.weightFastFill}
+            onChange={(e) =>
+              update((d) => (d.aiAdvisor.weightFastFill = +e.target.value))
+            }
+          />
         </Field>
         <Field label="Thời gian trên trang">
-          <TextInput type="number" value={a.weightTimeOnPage} onChange={(e) => update((d) => (d.aiAdvisor.weightTimeOnPage = +e.target.value))} />
+          <TextInput
+            type="number"
+            value={a.weightTimeOnPage}
+            onChange={(e) =>
+              update((d) => (d.aiAdvisor.weightTimeOnPage = +e.target.value))
+            }
+          />
         </Field>
         <Field label="Độ sâu cuộn">
-          <TextInput type="number" value={a.weightScroll} onChange={(e) => update((d) => (d.aiAdvisor.weightScroll = +e.target.value))} />
+          <TextInput
+            type="number"
+            value={a.weightScroll}
+            onChange={(e) =>
+              update((d) => (d.aiAdvisor.weightScroll = +e.target.value))
+            }
+          />
         </Field>
         <Field label="Quay lại nhiều lần">
-          <TextInput type="number" value={a.weightReturnVisit} onChange={(e) => update((d) => (d.aiAdvisor.weightReturnVisit = +e.target.value))} />
+          <TextInput
+            type="number"
+            value={a.weightReturnVisit}
+            onChange={(e) =>
+              update((d) => (d.aiAdvisor.weightReturnVisit = +e.target.value))
+            }
+          />
         </Field>
       </div>
-      <Field label="Mẫu kịch bản gọi" hint="Dùng {name} {city} {major} {ai_rank} {ai_score} {sale_advice}">
-        <TextArea value={a.callScriptTemplate} onChange={(e) => update((d) => (d.aiAdvisor.callScriptTemplate = e.target.value))} />
+      <Field
+        label="Mẫu kịch bản gọi"
+        hint="Dùng {name} {city} {major} {ai_rank} {ai_score} {sale_advice}"
+      >
+        <TextArea
+          value={a.callScriptTemplate}
+          onChange={(e) =>
+            update((d) => (d.aiAdvisor.callScriptTemplate = e.target.value))
+          }
+        />
       </Field>
       <SaveHint />
     </AdminModal>
@@ -915,7 +959,9 @@ function EmailModal({ onClose }: ModalProps) {
               autoComplete="new-password"
               value={e.gmailClientId}
               onChange={(ev) =>
-                update((d) => (d.emailAutomation.gmailClientId = ev.target.value))
+                update(
+                  (d) => (d.emailAutomation.gmailClientId = ev.target.value),
+                )
               }
               placeholder="xxxx.apps.googleusercontent.com"
             />
@@ -926,7 +972,10 @@ function EmailModal({ onClose }: ModalProps) {
               autoComplete="new-password"
               value={e.gmailClientSecret}
               onChange={(ev) =>
-                update((d) => (d.emailAutomation.gmailClientSecret = ev.target.value))
+                update(
+                  (d) =>
+                    (d.emailAutomation.gmailClientSecret = ev.target.value),
+                )
               }
               placeholder="GOCSPX-..."
             />
@@ -937,7 +986,10 @@ function EmailModal({ onClose }: ModalProps) {
               autoComplete="new-password"
               value={e.gmailRefreshToken}
               onChange={(ev) =>
-                update((d) => (d.emailAutomation.gmailRefreshToken = ev.target.value))
+                update(
+                  (d) =>
+                    (d.emailAutomation.gmailRefreshToken = ev.target.value),
+                )
               }
               placeholder="1//0e..."
             />
@@ -1359,7 +1411,11 @@ function LeadsModal({ onClose }: ModalProps) {
     const refresh = () => setLeads(loadLeads());
     refresh();
     window.addEventListener(LEAD_CREATED_EVENT, refresh);
-    return () => window.removeEventListener(LEAD_CREATED_EVENT, refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener(LEAD_CREATED_EVENT, refresh);
+      window.removeEventListener("storage", refresh);
+    };
   }, []);
 
   const cloud =
@@ -1468,7 +1524,9 @@ function LeadsModal({ onClose }: ModalProps) {
                   className="border-t border-neutral-200 align-top dark:border-white/10"
                 >
                   <td className="max-w-[140px] px-2 py-2 font-semibold">
-                    <div className="truncate" title={l.name}>{l.name}</div>
+                    <div className="truncate" title={l.name}>
+                      {l.name}
+                    </div>
                     {l.aiRank && (
                       <span className="ml-1.5 rounded bg-amber-100 px-1.5 text-[10px] font-bold text-amber-700">
                         {l.aiRank}
@@ -1496,9 +1554,21 @@ function LeadsModal({ onClose }: ModalProps) {
                       </p>
                     )}
                   </td>
-                  <td className="whitespace-nowrap px-2 py-2 tabular-nums">{l.phone}</td>
-                  <td className="max-w-[80px] truncate px-2 py-2" title={l.city || ""}>{l.city || "—"}</td>
-                  <td className="max-w-[100px] truncate px-2 py-2" title={l.major || ""}>{l.major || "—"}</td>
+                  <td className="whitespace-nowrap px-2 py-2 tabular-nums">
+                    {l.phone}
+                  </td>
+                  <td
+                    className="max-w-[80px] truncate px-2 py-2"
+                    title={l.city || ""}
+                  >
+                    {l.city || "—"}
+                  </td>
+                  <td
+                    className="max-w-[100px] truncate px-2 py-2"
+                    title={l.major || ""}
+                  >
+                    {l.major || "—"}
+                  </td>
                   <td className="whitespace-nowrap px-2 py-2 text-neutral-500">
                     {new Date(l.at).toLocaleString("vi-VN")}
                   </td>
@@ -1810,9 +1880,10 @@ function AbTestModal({ onClose }: ModalProps) {
 
 /* -------------------------------- UTM ------------------------------------- */
 function UtmModal({ onClose }: ModalProps) {
-  const [currentParams, setCurrentParams] = useState<
-    Record<string, string> | null
-  >(null);
+  const [currentParams, setCurrentParams] = useState<Record<
+    string,
+    string
+  > | null>(null);
   const [testUrl, setTestUrl] = useState("");
   const [builtUrl, setBuiltUrl] = useState("");
 
@@ -1837,7 +1908,8 @@ function UtmModal({ onClose }: ModalProps) {
 
   function buildUrl() {
     try {
-      const base = testUrl.trim() || window.location.origin + window.location.pathname;
+      const base =
+        testUrl.trim() || window.location.origin + window.location.pathname;
       const u = new URL(base);
       const sources: Record<string, string> = {
         facebook: "facebook",
@@ -1846,11 +1918,20 @@ function UtmModal({ onClose }: ModalProps) {
         google: "google",
         instagram: "instagram",
       };
-      const medium = (document.getElementById("utm-medium") as HTMLInputElement)?.value || "";
-      const campaign = (document.getElementById("utm-campaign") as HTMLInputElement)?.value || "";
-      const content = (document.getElementById("utm-content") as HTMLInputElement)?.value || "";
-      const term = (document.getElementById("utm-term") as HTMLInputElement)?.value || "";
-      const sourceSelect = (document.getElementById("utm-source") as HTMLSelectElement)?.value || "";
+      const medium =
+        (document.getElementById("utm-medium") as HTMLInputElement)?.value ||
+        "";
+      const campaign =
+        (document.getElementById("utm-campaign") as HTMLInputElement)?.value ||
+        "";
+      const content =
+        (document.getElementById("utm-content") as HTMLInputElement)?.value ||
+        "";
+      const term =
+        (document.getElementById("utm-term") as HTMLInputElement)?.value || "";
+      const sourceSelect =
+        (document.getElementById("utm-source") as HTMLSelectElement)?.value ||
+        "";
       if (sourceSelect) u.searchParams.set("utm_source", sourceSelect);
       if (medium) u.searchParams.set("utm_medium", medium);
       if (campaign) u.searchParams.set("utm_campaign", campaign);

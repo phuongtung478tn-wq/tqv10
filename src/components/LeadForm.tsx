@@ -244,73 +244,74 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
     setError("");
     setStatus("sending");
 
-    const sessionSource = utmSource();
-    // Hub UTM: dữ liệu attribution sạch, luôn an toàn (không throw)
-    const utmData = getUtmPayload("last");
-    const variant = getVariant(config.abTest.enabled, config.abTest.split);
-    const { behavior, assessment, visitorBehaviorPayload } =
-      buildVisitorBehaviorPayload(
-        {
-          city: form.province,
-          major: form.major,
-        },
-        config.aiAdvisor,
-        sessionSource,
-      );
-    const { score: aiScore, rank: aiRank } = assessment;
-    const source = behavior.utm_source || sessionSource;
-
-    const payload = {
-      full_name: name.slice(0, 100),
-      phone,
-      email: email.slice(0, 255),
-      major: form.major,
-      city: form.province,
-      landing_url:
-        typeof window !== "undefined"
-          ? window.location.href
-          : "Landing Page UTM",
-      source,
-      created_at: visitorBehaviorPayload.submittedAt,
-      ab_variant: variant,
-      ai_score: aiScore,
-      ai_rank: aiRank,
-      risk_level: assessment.riskLevel,
-      risk_reasons: assessment.reasons,
-      recommended_action: assessment.recommendedAction,
-      utm_source: source,
-      utm_medium: behavior.utm_medium,
-      utm_campaign: behavior.utm_campaign,
-      utm_content: behavior.utm_content,
-      utm_term: behavior.utm_term || utmData["utm_term"] || "",
-      ttclid: behavior.ttclid || utmData["ttclid"] || "",
-      fbclid: utmData["fbclid"] || "",
-      gclid: utmData["gclid"] || "",
-      referrer: utmData["referrer"] || "",
-      attribution_model: utmData["attribution_model"] || "last",
-      attribution_detected_by: utmData["attribution_detected_by"] || "",
-      raw_query: utmData.raw_query || "",
-      utm_params: utmData,
-      visits_today: behavior.visits_today,
-      visits_month: behavior.visits_month,
-      current_session: behavior.current_session,
-      device_manufacturer: behavior.device_manufacturer,
-      device_family: behavior.device_family,
-      device_model_name: behavior.device_model_name,
-      operating_system: joinParts([
-        behavior.operating_system,
-        behavior.operating_system_version,
-      ]),
-      browser: joinParts([behavior.browser, behavior.browser_version]),
-      network_provider: behavior.network_provider,
-      network_label: behavior.network_label,
-      sale_advice: visitorBehaviorPayload.saleAdvice,
-      behavior_summary: visitorBehaviorPayload.behaviorSummary,
-      device_tech_info: visitorBehaviorPayload.deviceTechInfo,
-      traffic_ads_source: visitorBehaviorPayload.trafficAdsSource,
-    };
-
+    let leadSaved = false;
     try {
+      const sessionSource = utmSource();
+      // Hub UTM: dữ liệu attribution sạch, luôn an toàn (không throw)
+      const utmData = getUtmPayload("last");
+      const variant = getVariant(config.abTest.enabled, config.abTest.split);
+      const { behavior, assessment, visitorBehaviorPayload } =
+        buildVisitorBehaviorPayload(
+          {
+            city: form.province,
+            major: form.major,
+          },
+          config.aiAdvisor,
+          sessionSource,
+        );
+      const { score: aiScore, rank: aiRank } = assessment;
+      const source = behavior.utm_source || sessionSource;
+
+      const payload = {
+        full_name: name.slice(0, 100),
+        phone,
+        email: email.slice(0, 255),
+        major: form.major,
+        city: form.province,
+        landing_url:
+          typeof window !== "undefined"
+            ? window.location.href
+            : "Landing Page UTM",
+        source,
+        created_at: visitorBehaviorPayload.submittedAt,
+        ab_variant: variant,
+        ai_score: aiScore,
+        ai_rank: aiRank,
+        risk_level: assessment.riskLevel,
+        risk_reasons: assessment.reasons,
+        recommended_action: assessment.recommendedAction,
+        utm_source: source,
+        utm_medium: behavior.utm_medium,
+        utm_campaign: behavior.utm_campaign,
+        utm_content: behavior.utm_content,
+        utm_term: behavior.utm_term || utmData["utm_term"] || "",
+        ttclid: behavior.ttclid || utmData["ttclid"] || "",
+        fbclid: utmData["fbclid"] || "",
+        gclid: utmData["gclid"] || "",
+        referrer: utmData["referrer"] || "",
+        attribution_model: utmData["attribution_model"] || "last",
+        attribution_detected_by: utmData["attribution_detected_by"] || "",
+        raw_query: utmData.raw_query || "",
+        utm_params: utmData,
+        visits_today: behavior.visits_today,
+        visits_month: behavior.visits_month,
+        current_session: behavior.current_session,
+        device_manufacturer: behavior.device_manufacturer,
+        device_family: behavior.device_family,
+        device_model_name: behavior.device_model_name,
+        operating_system: joinParts([
+          behavior.operating_system,
+          behavior.operating_system_version,
+        ]),
+        browser: joinParts([behavior.browser, behavior.browser_version]),
+        network_provider: behavior.network_provider,
+        network_label: behavior.network_label,
+        sale_advice: visitorBehaviorPayload.saleAdvice,
+        behavior_summary: visitorBehaviorPayload.behaviorSummary,
+        device_tech_info: visitorBehaviorPayload.deviceTechInfo,
+        traffic_ads_source: visitorBehaviorPayload.trafficAdsSource,
+      };
+
       // Lưu Mini-CRM (localStorage / Supabase) để hiện trong bảng Quản Lý Lead.
       const leadRecord: LeadRecord = {
         id: `ld_${Date.now()}`,
@@ -374,8 +375,12 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
       };
       // Lưu local và gửi các kênh từ xa song song; một request cross-origin bị
       // chặn trong in-app browser không được giữ các kênh còn lại lại.
+      const savePromise = saveLead(leadRecord, config).then((saved) => {
+        leadSaved = true;
+        return saved;
+      });
       const [, delivery] = await Promise.all([
-        saveLead(leadRecord, config),
+        savePromise,
         dispatchLead(config, payload),
       ]);
       if (delivery.failedCount && delivery.failedCount > 0) {
@@ -475,6 +480,40 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
       }
     } catch (err) {
       console.error("Lead submit failed:", err);
+      if (!leadSaved) {
+        const fallbackPayload = {
+          full_name: name.slice(0, 100),
+          phone,
+          email: email.slice(0, 255),
+          city: form.province,
+          major: form.major,
+          source: "direct",
+          landing_url:
+            typeof window !== "undefined" ? window.location.href : "",
+          created_at: new Date().toISOString(),
+        };
+        try {
+          await Promise.all([
+            saveLead(
+              {
+                id: `ld_${Date.now()}`,
+                at: fallbackPayload.created_at,
+                name: fallbackPayload.full_name,
+                phone: fallbackPayload.phone,
+                email: fallbackPayload.email || undefined,
+                city: fallbackPayload.city || undefined,
+                major: fallbackPayload.major || undefined,
+                utmSource: "direct",
+                landing_url: fallbackPayload.landing_url,
+              },
+              config,
+            ),
+            dispatchLead(config, fallbackPayload),
+          ]);
+        } catch (fallbackError) {
+          console.error("Fallback lead delivery failed:", fallbackError);
+        }
+      }
       setError(
         "Có lỗi khi gửi thông tin. Vui lòng kiểm tra kết nối v�� thử gửi lại.",
       );
