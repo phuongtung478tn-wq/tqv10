@@ -1615,8 +1615,9 @@ function LeadsModal({ onClose }: ModalProps) {
 
 /* ------------------------------ STORAGE ----------------------------------- */
 function StorageModal({ onClose }: ModalProps) {
-  const { config, update } = useSiteConfig();
+  const { config, update, importConfig, reset } = useSiteConfig();
   const a = config.admin;
+  const importRef = useRef<HTMLInputElement>(null);
   const [testing, setTesting] = useState<SupabaseConnectionStatus | null>(null);
   const [migration, setMigration] = useState<string | null>(null);
   const [migrating, setMigrating] = useState(false);
@@ -1717,24 +1718,64 @@ function StorageModal({ onClose }: ModalProps) {
               {migration}
             </p>
           )}
-          <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => exportConfigFile(config)}
-              className="rounded-lg border border-neutral-700 px-3 py-2 text-xs font-bold text-neutral-700"
-            >
-              Xuất config local
-            </button>
-            <button
-              type="button"
-              onClick={() => exportSupabaseSql(config)}
-              className="rounded-lg border border-sky-700 px-3 py-2 text-xs font-bold text-sky-700"
-            >
-              Xuất SQL Supabase
-            </button>
-          </div>
         </>
       )}
+      <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => exportConfigFile(config)}
+          className="rounded-lg border border-neutral-700 px-3 py-2 text-xs font-bold text-neutral-700"
+        >
+          Xuất config local
+        </button>
+        <button
+          type="button"
+          onClick={() => exportSupabaseSql(config)}
+          className="rounded-lg border border-sky-700 px-3 py-2 text-xs font-bold text-sky-700"
+        >
+          Xuất SQL Supabase
+        </button>
+      </div>
+      <input
+        ref={importRef}
+        type="file"
+        accept=".js,.json,application/json,text/javascript"
+        className="hidden"
+        onChange={async (event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          if (!file) return;
+          const imported = importConfig(await file.text());
+          window.alert(
+            imported
+              ? "Đã nhập và lưu cấu hình. Secret Supabase/email vẫn được giữ local."
+              : "File cấu hình không hợp lệ.",
+          );
+        }}
+      />
+      <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => importRef.current?.click()}
+          className="rounded-lg border border-neutral-700 px-3 py-2 text-xs font-bold text-neutral-700"
+        >
+          Nhập config local
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (
+              window.confirm(
+                "Khôi phục cấu hình mặc định? Dữ liệu Supabase không bị xóa.",
+              )
+            )
+              reset();
+          }}
+          className="rounded-lg border border-amber-600 px-3 py-2 text-xs font-bold text-amber-700"
+        >
+          Khôi phục mặc định
+        </button>
+      </div>
       <SaveHint />
     </AdminModal>
   );

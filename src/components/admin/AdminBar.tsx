@@ -98,10 +98,16 @@ const TOOL_GROUPS: ToolGroup[] = [
     key: "system",
     label: "Hệ thống",
     icon: Settings2,
+    tools: [{ key: "guide", label: "Hướng Dẫn & Health", icon: BookOpen }],
+  },
+  {
+    key: "configuration",
+    label: "Cấu hình",
+    icon: Settings2,
     tools: [
+      { key: "storage", label: "Storage & Xuất/Nhập", icon: Database },
       { key: "cron", label: "Cloud Cron & Backup", icon: CloudUpload },
       { key: "adminlink", label: "Đổi Link Admin", icon: KeyRound },
-      { key: "guide", label: "Hướng Dẫn & Health", icon: BookOpen },
     ],
   },
 ];
