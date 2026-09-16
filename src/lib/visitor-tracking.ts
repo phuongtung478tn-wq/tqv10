@@ -396,7 +396,9 @@ function detectHeadlessBrowser() {
   const nav = navigator as Navigator & { webdriver?: boolean };
   let score = 0;
   if (nav.webdriver) score += 1;
-  if (/HeadlessChrome|Puppeteer|Playwright|PhantomJS/i.test(navigator.userAgent))
+  if (
+    /HeadlessChrome|Puppeteer|Playwright|PhantomJS/i.test(navigator.userAgent)
+  )
     score += 1;
   if (navigator.languages && navigator.languages.length === 0) score += 1;
   if (window.outerWidth === 0 && window.outerHeight === 0) score += 1;
@@ -586,7 +588,10 @@ async function fetchRemoteSessionCounts(
   const headers = {
     "Content-Type": "application/json",
     apikey: options.supabaseAnonKey,
+    Authorization: `Bearer ${options.supabaseAnonKey}`,
   };
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), NETWORK_TIMEOUT_MS);
 
   try {
     if (isNewSession) {
@@ -596,6 +601,7 @@ async function fetchRemoteSessionCounts(
           ...headers,
           Prefer: "resolution=ignore-duplicates,return=minimal",
         },
+        signal: controller.signal,
         body: JSON.stringify([
           {
             id: sessionId,
@@ -619,11 +625,11 @@ async function fetchRemoteSessionCounts(
     const [todayResponse, monthResponse] = await Promise.all([
       fetch(
         `${base}/rest/v1/${VISITOR_SESSION_TABLE}?visitor_id=eq.${encodeURIComponent(visitorId)}&visited_day=eq.${dayKey()}&select=id`,
-        { headers },
+        { headers, signal: controller.signal },
       ),
       fetch(
         `${base}/rest/v1/${VISITOR_SESSION_TABLE}?visitor_id=eq.${encodeURIComponent(visitorId)}&visited_month=eq.${monthKey()}&select=id`,
-        { headers },
+        { headers, signal: controller.signal },
       ),
     ]);
 
@@ -645,6 +651,8 @@ async function fetchRemoteSessionCounts(
     updateSnapshot();
   } catch {
     /* ignore remote fallback */
+  } finally {
+    window.clearTimeout(timer);
   }
 }
 
@@ -725,9 +733,12 @@ function detectHardwareInfo() {
     deviceMemory?: number;
     hardwareConcurrency?: number;
   };
-  runtime.deviceMemory = typeof nav.deviceMemory === "number" ? nav.deviceMemory : null;
+  runtime.deviceMemory =
+    typeof nav.deviceMemory === "number" ? nav.deviceMemory : null;
   runtime.hardwareConcurrency =
-    typeof nav.hardwareConcurrency === "number" ? nav.hardwareConcurrency : null;
+    typeof nav.hardwareConcurrency === "number"
+      ? nav.hardwareConcurrency
+      : null;
 }
 
 export function initVisitorTracking(options: VisitorTrackingInitOptions = {}) {
@@ -738,10 +749,11 @@ export function initVisitorTracking(options: VisitorTrackingInitOptions = {}) {
       runtime.options,
       runtime.visitorId,
       runtime.sessionId,
-      false,
+      options.storageMode === "database",
       runtime.attribution,
       runtime.device,
     );
+    runtime.options = options;
     return runtime.cleanup || (() => {});
   }
 
@@ -787,8 +799,7 @@ export function initVisitorTracking(options: VisitorTrackingInitOptions = {}) {
     const doc = document.documentElement;
     const total = doc.scrollHeight - window.innerHeight;
     const currentY = window.scrollY || 0;
-    const percent =
-      total > 0 ? Math.round((currentY / total) * 100) : 100;
+    const percent = total > 0 ? Math.round((currentY / total) * 100) : 100;
     runtime.maxScrollPercent = Math.max(
       runtime.maxScrollPercent,
       Math.min(100, percent),
@@ -797,7 +808,7 @@ export function initVisitorTracking(options: VisitorTrackingInitOptions = {}) {
     const dt = now - runtime.lastScrollTime;
     if (dt > 0 && runtime.lastScrollTime > 0) {
       const dy = Math.abs(currentY - runtime.lastScrollY);
-      const v = Math.round(dy / dt * 1000);
+      const v = Math.round((dy / dt) * 1000);
       runtime.scrollVelocity = v;
       runtime.maxScrollVelocity = Math.max(runtime.maxScrollVelocity, v);
       if (currentY < runtime.lastScrollY - 5) {

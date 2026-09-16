@@ -92,3 +92,9 @@ drop policy if exists "visitor sessions can be created by public form"
 create policy "visitor sessions can be created by public form"
   on public.visitor_sessions for insert
   with check (true);
+
+drop policy if exists "visitor sessions can be counted by public form"
+  on public.visitor_sessions;
+create policy "visitor sessions can be counted by public form"
+  on public.visitor_sessions for select
+  using (true);
