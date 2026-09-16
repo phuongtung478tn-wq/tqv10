@@ -122,9 +122,13 @@ export async function loadCloudConfig(
     const rows = (await response.json()) as unknown;
     if (!Array.isArray(rows) || !isRecord(rows[0])) return null;
     const data = rows[0]["data"];
-    return isRecord(data)
-      ? mergeConfig(config, data as Partial<SiteConfig>)
-      : null;
+    if (!isRecord(data)) return null;
+    const merged = mergeConfig(config, data as Partial<SiteConfig>);
+    // Credential không được lưu cloud, nên luôn giữ bản local khi hydrate.
+    merged.admin.supabaseUrl = config.admin.supabaseUrl;
+    merged.admin.supabaseAnonKey = config.admin.supabaseAnonKey;
+    merged.admin.storageMode = config.admin.storageMode;
+    return merged;
   } catch {
     return null;
   }
