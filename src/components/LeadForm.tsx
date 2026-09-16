@@ -372,10 +372,12 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
         operatingSystem: payload.operating_system,
         browser: payload.browser,
       };
-      await saveLead(leadRecord, config);
-
-      // Gửi lead ra webhook các kênh — best-effort, không chặn trải nghiệm khách.
-      const delivery = await dispatchLead(config, payload);
+      // Lưu local và gửi các kênh từ xa song song; một request cross-origin bị
+      // chặn trong in-app browser không được giữ các kênh còn lại lại.
+      const [, delivery] = await Promise.all([
+        saveLead(leadRecord, config),
+        dispatchLead(config, payload),
+      ]);
       if (delivery.failedCount && delivery.failedCount > 0) {
         const failed = delivery.results
           .filter((result) => !result.ok)

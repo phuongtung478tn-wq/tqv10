@@ -12,8 +12,8 @@ export interface WebhookResult {
   attempts: number;
 }
 
-const TIMEOUT_MS = 8_000;
-const RETRIES = 2;
+const TIMEOUT_MS = 4_000;
+const RETRIES = 1;
 
 function validUrl(value: string): boolean {
   try {
@@ -143,6 +143,7 @@ async function postOne(
       method: "POST",
       headers,
       body: JSON.stringify(body),
+      keepalive: true,
     });
     if (!result.response?.ok)
       return {
@@ -216,7 +217,11 @@ export async function dispatchLead(
   // Fallback: nếu fetch thất bại, thử sendBeacon (hoạt động ngay cả khi
   // in-app browser chặn fetch hoặc khi trang đang redirect)
   const failed = results.filter((r) => !r.ok);
-  if (failed.length > 0 && typeof navigator !== "undefined" && navigator.sendBeacon) {
+  if (
+    failed.length > 0 &&
+    typeof navigator !== "undefined" &&
+    navigator.sendBeacon
+  ) {
     for (const ep of uniqueEndpoints) {
       const result = results.find((r) => r.label === (ep.label || ep.type));
       if (result?.ok) continue;

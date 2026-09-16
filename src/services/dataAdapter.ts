@@ -341,6 +341,8 @@ export async function saveLead(
       ? "database"
       : "local";
   const record: LeadRecord = { ...lead, storage: mode };
+  // Cache trước khi gọi mạng để in-app browser không làm mất lead khi request bị treo.
+  cacheLeadLocally(record);
   if (mode === "database" && config) {
     const ok = await pushLeadToSupabase(
       record,
@@ -349,7 +351,6 @@ export async function saveLead(
     );
     if (!ok) record.storage = "local";
   }
-  cacheLeadLocally(record);
   return record;
 }
 
@@ -367,6 +368,7 @@ async function pushLeadToSupabase(
         Authorization: `Bearer ${key}`,
         Prefer: "return=minimal",
       },
+      keepalive: true,
       body: JSON.stringify([
         {
           name: lead.name,
