@@ -11,6 +11,101 @@ type ServerEntry = {
   ) => Promise<Response> | Response;
 };
 
+const BACKUP_TABLES = [
+  "funnel_configs",
+  "funnel_analytics",
+  "leads",
+  "visitor_sessions",
+] as const;
+
+function isBackupRequest(request: Request) {
+  return new URL(request.url).pathname === "/api/backup";
+}
+
+function isAuthorizedBackupRequest(request: Request) {
+  const token = process.env["BACKUP_CRON_TOKEN"];
+  return (
+    request.headers.get("x-vercel-cron") === "1" ||
+    (Boolean(token) && new URL(request.url).searchParams.get("token") === token)
+  );
+}
+
+async function handleBackupRequest(request: Request): Promise<Response> {
+  if (!isAuthorizedBackupRequest(request)) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  const supabaseUrl = process.env["SUPABASE_URL"]?.replace(/\/$/, "");
+  const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
+  const resendKey = process.env["RESEND_API_KEY"];
+  const fromEmail = process.env["BACKUP_FROM_EMAIL"];
+  if (!supabaseUrl || !serviceKey || !resendKey || !fromEmail) {
+    return new Response("Backup environment is incomplete", { status: 503 });
+  }
+
+  const headers = {
+    apikey: serviceKey,
+    Authorization: `Bearer ${serviceKey}`,
+  };
+  const configResponse = await fetch(
+    `${supabaseUrl}/rest/v1/funnel_configs?id=eq.1&select=data`,
+    { headers },
+  );
+  if (!configResponse.ok) {
+    return new Response("Cannot read backup configuration", { status: 502 });
+  }
+  const configRows = (await configResponse.json()) as Array<{
+    data?: { admin?: { backupEmail?: string; cronSchedule?: string } };
+  }>;
+  const admin = configRows[0]?.data?.admin;
+  const recipient = admin?.backupEmail?.trim();
+  const schedule = admin?.cronSchedule || "off";
+  if (!recipient || schedule === "off") return new Response("Backup disabled");
+  if (schedule === "weekly" && new Date().getUTCDay() !== 1) {
+    return new Response("Weekly backup is not due");
+  }
+
+  const tables = await Promise.all(
+    BACKUP_TABLES.map(async (table) => {
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/${table}?select=*${table === "leads" || table === "visitor_sessions" ? "&limit=5000" : ""}`,
+        { headers },
+      );
+      return [table, response.ok ? await response.json() : []] as const;
+    }),
+  );
+  const backup = JSON.stringify(
+    {
+      generated_at: new Date().toISOString(),
+      tables: Object.fromEntries(tables),
+    },
+    null,
+  );
+  const emailResponse = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${resendKey}`,
+    },
+    body: JSON.stringify({
+      from: fromEmail,
+      to: [recipient],
+      subject: `[Backup] ${new Date().toISOString().slice(0, 10)}`,
+      text: "Bản backup dữ liệu Supabase được đính kèm.",
+      attachments: [
+        {
+          filename: `backup-${new Date().toISOString().slice(0, 10)}.json`,
+          content: Buffer.from(backup, "utf8").toString("base64"),
+        },
+      ],
+    }),
+  });
+  if (!emailResponse.ok) {
+    console.error("Backup email failed", await emailResponse.text());
+    return new Response("Backup email failed", { status: 502 });
+  }
+  return new Response("Backup sent");
+}
+
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
 async function getServerEntry(): Promise<ServerEntry> {
@@ -58,6 +153,7 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      if (isBackupRequest(request)) return await handleBackupRequest(request);
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);

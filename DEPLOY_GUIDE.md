@@ -95,14 +95,25 @@ Dùng khi muốn cấu hình & lead đồng bộ nhiều thiết bị thay vì c
 ## D. Cloud Cron-job (sao lưu định kỳ)
 
 Admin hỗ trợ lịch backup (`daily` / `weekly` / `off`) trong mục **📂 Cloud Cron & Backup**.
-Trên hosting/VPS bạn có thể đặt cron gọi endpoint sao lưu, ví dụ:
+Với Vercel, endpoint `/api/backup` đã được cấu hình trong `vercel.json` và được gọi hằng ngày lúc 02:00 UTC. Endpoint tự kiểm tra `cronSchedule`; lịch `weekly` chỉ gửi vào thứ Hai.
+
+Thêm các biến môi trường Production trên Vercel:
+
+- `SUPABASE_URL` — URL project Supabase.
+- `SUPABASE_SERVICE_ROLE_KEY` — chỉ đặt trên server, không đưa vào frontend.
+- `RESEND_API_KEY` — API key Resend.
+- `BACKUP_FROM_EMAIL` — email đã xác minh trên Resend.
+- `BACKUP_CRON_TOKEN` — tùy chọn, dùng khi gọi thủ công ngoài Vercel Cron.
+
+Sau đó nhập email nhận backup trong Admin, chọn `daily` hoặc `weekly`, bấm **LƯU THAY ĐỔI**, rồi deploy lại.
+
+Gọi thủ công để kiểm tra:
 
 ```bash
-# Sao lưu mỗi ngày lúc 2h sáng
-0 2 * * * curl -s https://duhoctq.example.com/api/backup >/dev/null 2>&1
+curl -i "https://tqv10.vercel.app/api/backup?token=$BACKUP_CRON_TOKEN"
 ```
 
-Hoặc dùng cron của Supabase / dịch vụ ngoài (cron-job.org, EasyCron) trỏ tới webhook backup.
+Phải nhận HTTP `200 Backup sent`. Nếu nhận `503`, kiểm tra đủ biến môi trường; nếu `401`, kiểm tra token hoặc gọi từ Vercel Cron.
 
 ---
 
