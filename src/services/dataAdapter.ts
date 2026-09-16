@@ -136,10 +136,14 @@ export async function loadCloudConfig(
 
 export function saveConfig(config: SiteConfig): void {
   if (!isBrowser()) return;
+  let localSaved = true;
   try {
     window.localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
   } catch {
-    return;
+    localSaved = false;
+    console.warn(
+      "LocalStorage config save failed; continuing with Supabase sync.",
+    );
   }
   // Auto backup snapshot (giữ tối đa 10 bản gần nhất)
   try {
@@ -158,6 +162,11 @@ export function saveConfig(config: SiteConfig): void {
     config.admin.supabaseAnonKey
   ) {
     void syncConfigToSupabase(config);
+  }
+  if (!localSaved && config.admin.storageMode !== "database") {
+    console.warn(
+      "Config is not persisted locally because Database Mode is disabled.",
+    );
   }
 }
 
@@ -724,6 +733,8 @@ export function clearAnalytics(): void {
 
 /** Ghi config vào bảng `site_config` (id=1) qua Supabase REST. Best-effort. */
 async function syncConfigToSupabase(config: SiteConfig): Promise<void> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 5_000);
   try {
     const { supabaseUrl, supabaseAnonKey } = config.admin;
     const cloudConfig = structuredClone(config);
@@ -741,6 +752,7 @@ async function syncConfigToSupabase(config: SiteConfig): Promise<void> {
         body: JSON.stringify([
           { id: 1, data: cloudConfig, updated_at: new Date().toISOString() },
         ]),
+        signal: controller.signal,
       },
     );
     if (!response.ok) {
@@ -748,6 +760,8 @@ async function syncConfigToSupabase(config: SiteConfig): Promise<void> {
     }
   } catch (err) {
     console.warn("Supabase config sync failed:", (err as Error).message);
+  } finally {
+    window.clearTimeout(timer);
   }
 }
 
