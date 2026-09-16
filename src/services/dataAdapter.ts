@@ -21,6 +21,7 @@ export const LEAD_CREATED_EVENT = "funnel:lead-created";
 export const ANALYTICS_UPDATED_EVENT = "funnel:analytics-updated";
 const CLOUD_CONFIG_TABLE = "funnel_configs";
 const REMOTE_LEAD_TIMEOUT_MS = 3_000;
+const REMOTE_DUPLICATE_TIMEOUT_MS = 1_500;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -298,21 +299,31 @@ export async function isDuplicateLeadRemote(
   }
   try {
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const controller = new AbortController();
+    const timer = window.setTimeout(
+      () => controller.abort(),
+      REMOTE_DUPLICATE_TIMEOUT_MS,
+    );
     const url =
       `${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/leads` +
       `?phone=eq.${encodeURIComponent(phone)}&created_at=gte.${cutoff}&select=id`;
-    const res = await fetch(url, {
-      headers: {
-        apikey: config.admin.supabaseAnonKey,
-        Authorization: `Bearer ${config.admin.supabaseAnonKey}`,
-      },
-    });
-    if (!res.ok) {
-      console.warn(`isDuplicateLeadRemote: Supabase returned ${res.status}`);
-      return false;
+    try {
+      const res = await fetch(url, {
+        headers: {
+          apikey: config.admin.supabaseAnonKey,
+          Authorization: `Bearer ${config.admin.supabaseAnonKey}`,
+        },
+        signal: controller.signal,
+      });
+      if (!res.ok) {
+        console.warn(`isDuplicateLeadRemote: Supabase returned ${res.status}`);
+        return false;
+      }
+      const rows = (await res.json()) as unknown[];
+      return Array.isArray(rows) && rows.length > 0;
+    } finally {
+      window.clearTimeout(timer);
     }
-    const rows = (await res.json()) as unknown[];
-    return Array.isArray(rows) && rows.length > 0;
   } catch (err) {
     console.warn(
       "isDuplicateLeadRemote: network error, allowing submit",
