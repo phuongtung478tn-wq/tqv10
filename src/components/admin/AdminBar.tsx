@@ -22,7 +22,6 @@ import {
   Palette,
   Megaphone,
   Settings2,
-  SlidersHorizontal,
   Smartphone,
   Tablet,
   Monitor,
@@ -49,6 +48,7 @@ interface ToolGroup {
   label: string;
   icon: LucideIcon;
   tools: Tool[];
+  includePreviewSettings?: boolean;
 }
 
 const TOOL_GROUPS: ToolGroup[] = [
@@ -91,19 +91,15 @@ const TOOL_GROUPS: ToolGroup[] = [
     ],
   },
   {
-    key: "system",
-    label: "Hệ thống",
-    icon: Settings2,
-    tools: [{ key: "guide", label: "Hướng Dẫn & Health", icon: BookOpen }],
-  },
-  {
     key: "configuration",
     label: "Cấu hình",
     icon: Settings2,
+    includePreviewSettings: true,
     tools: [
       { key: "storage", label: "Storage & Xuất/Nhập", icon: Database },
       { key: "cron", label: "Cloud Cron & Backup", icon: CloudUpload },
       { key: "adminlink", label: "Đổi Link Admin", icon: KeyRound },
+      { key: "guide", label: "Hướng Dẫn & Health", icon: BookOpen },
     ],
   },
 ];
@@ -194,7 +190,7 @@ export function AdminBar() {
                   <div
                     role="menu"
                     aria-label={group.label}
-                    className="absolute left-0 top-full z-[95] mt-1 w-56 overflow-hidden rounded-lg border border-white/10 bg-neutral-900 p-1 shadow-xl"
+                    className={`absolute left-0 top-full z-[95] mt-1 overflow-hidden rounded-lg border border-white/10 bg-neutral-900 p-1 shadow-xl ${group.includePreviewSettings ? "w-72" : "w-56"}`}
                   >
                     <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white/40">
                       {group.label}
@@ -216,6 +212,62 @@ export function AdminBar() {
                         </button>
                       );
                     })}
+                    {group.includePreviewSettings && (
+                      <div className="mt-1 border-t border-white/10 p-1">
+                        <p className="px-1 py-1 text-[10px] font-bold uppercase tracking-wide text-white/40">
+                          Kích thước khung xem trước
+                        </p>
+                        <div className="flex items-center gap-2 text-[11px] text-white/60">
+                          <label className="flex items-center gap-1">
+                            Rộng
+                            <input
+                              aria-label="Chiều rộng khung xem thử"
+                              type="number"
+                              min="280"
+                              max="1920"
+                              value={deviceSizes[device].width}
+                              onChange={(event) =>
+                                setDeviceSize(device, {
+                                  ...deviceSizes[device],
+                                  width: Math.max(
+                                    280,
+                                    Number(event.target.value) || 280,
+                                  ),
+                                })
+                              }
+                              className="w-16 rounded border border-white/20 bg-white/10 px-1.5 py-1 text-center text-[11px] text-white"
+                            />
+                          </label>
+                          <label className="flex items-center gap-1">
+                            Cao
+                            <input
+                              aria-label="Chiều cao khung xem thử"
+                              type="number"
+                              min="400"
+                              max="1600"
+                              value={deviceSizes[device].height}
+                              onChange={(event) =>
+                                setDeviceSize(device, {
+                                  ...deviceSizes[device],
+                                  height: Math.max(
+                                    400,
+                                    Number(event.target.value) || 400,
+                                  ),
+                                })
+                              }
+                              className="w-16 rounded border border-white/20 bg-white/10 px-1.5 py-1 text-center text-[11px] text-white"
+                            />
+                          </label>
+                          <button
+                            onClick={resetDeviceSizes}
+                            className="rounded-md bg-white/10 px-2 py-1 text-[11px] font-semibold text-white/70 hover:bg-white/20 hover:text-white"
+                            title="Khôi phục kích thước mặc định"
+                          >
+                            Mặc định
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -271,77 +323,6 @@ export function AdminBar() {
               </button>
             );
           })}
-        </div>
-
-        {/* Điều khiển kích thước khung xem trước */}
-        <div className="relative shrink-0">
-          <button
-            onClick={() => toggleGroup("settings")}
-            aria-expanded={openGroup === "settings"}
-            aria-haspopup="menu"
-            aria-label="Kích thước khung xem trước"
-            title="Kích thước khung xem trước"
-            className={`${ICON_BUTTON} ${
-              openGroup === "settings"
-                ? "bg-white text-neutral-900"
-                : "bg-white/10 text-white/80 hover:bg-white/20"
-            }`}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-          </button>
-          {openGroup === "settings" && (
-            <div className="absolute left-0 top-full z-[95] mt-1 w-64 rounded-lg border border-white/10 bg-neutral-900 p-2 shadow-xl">
-              <p className="px-1 pb-1 text-[10px] font-bold uppercase tracking-wide text-white/40">
-                Kích thước khung xem trước
-              </p>
-              <div className="flex items-center gap-2 px-1 pb-2 text-[11px] text-white/60">
-                <label className="flex items-center gap-1">
-                  Rộng
-                  <input
-                    aria-label="Chiều rộng khung xem thử"
-                    type="number"
-                    min="280"
-                    max="1920"
-                    value={deviceSizes[device].width}
-                    onChange={(event) =>
-                      setDeviceSize(device, {
-                        ...deviceSizes[device],
-                        width: Math.max(280, Number(event.target.value) || 280),
-                      })
-                    }
-                    className="w-16 rounded border border-white/20 bg-white/10 px-1.5 py-1 text-center text-[11px] text-white"
-                  />
-                </label>
-                <label className="flex items-center gap-1">
-                  Cao
-                  <input
-                    aria-label="Chiều cao khung xem thử"
-                    type="number"
-                    min="400"
-                    max="1600"
-                    value={deviceSizes[device].height}
-                    onChange={(event) =>
-                      setDeviceSize(device, {
-                        ...deviceSizes[device],
-                        height: Math.max(
-                          400,
-                          Number(event.target.value) || 400,
-                        ),
-                      })
-                    }
-                    className="w-16 rounded border border-white/20 bg-white/10 px-1.5 py-1 text-center text-[11px] text-white"
-                  />
-                </label>
-                <button
-                  onClick={resetDeviceSizes}
-                  className="rounded-md bg-white/10 px-2 py-1 text-[11px] font-semibold text-white/70 hover:bg-white/20 hover:text-white"
-                  title="Khôi phục kích thước mặc định"
-                >
-                  Mặc định
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Lưu & đăng xuất luôn nằm sát mép phải */}
