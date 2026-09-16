@@ -14,6 +14,7 @@ import {
   exportLeadsCsv,
   loadAnalytics,
   loadLeads,
+  migrateLocalDataToSupabase,
   saveLead,
   testSupabaseConnection,
   type SupabaseConnectionStatus,
@@ -1606,6 +1607,8 @@ function StorageModal({ onClose }: ModalProps) {
   const { config, update } = useSiteConfig();
   const a = config.admin;
   const [testing, setTesting] = useState<SupabaseConnectionStatus | null>(null);
+  const [migration, setMigration] = useState<string | null>(null);
+  const [migrating, setMigrating] = useState(false);
   return (
     <AdminModal
       title="Storage Mode"
@@ -1671,6 +1674,36 @@ function StorageModal({ onClose }: ModalProps) {
                     : testing.reason === "invalid_url"
                       ? "URL Supabase không đúng định dạng https://<project>.supabase.co."
                       : "Không thể kết nối Supabase. Kiểm tra mạng, URL và CORS."}
+            </p>
+          )}
+          <button
+            type="button"
+            disabled={migrating || !testing?.ok || !testing.schemaReady}
+            onClick={async () => {
+              setMigrating(true);
+              setMigration(null);
+              try {
+                const result = await migrateLocalDataToSupabase(config);
+                setMigration(
+                  `Đã đồng bộ config: ${result.configSynced ? "có" : "chưa"}; lead tải lên: ${result.leadsUploaded}; đã có trên cloud: ${result.leadsSkipped}; lỗi: ${result.leadsFailed}. Dữ liệu LocalStorage vẫn được giữ lại.`,
+                );
+              } catch {
+                setMigration(
+                  "Đồng bộ thất bại. Kiểm tra RLS và schema Supabase.",
+                );
+              } finally {
+                setMigrating(false);
+              }
+            }}
+            className="mb-3 rounded-lg border border-sky-600 px-3 py-2 text-xs font-bold text-sky-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {migrating
+              ? "Đang đồng bộ..."
+              : "Đồng bộ LocalStorage lên Supabase"}
+          </button>
+          {migration && (
+            <p className="mb-3 text-xs font-semibold text-sky-700">
+              {migration}
             </p>
           )}
         </>

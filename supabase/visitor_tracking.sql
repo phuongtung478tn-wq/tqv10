@@ -58,6 +58,12 @@ alter table public.leads
 create index if not exists leads_phone_created_idx
   on public.leads (phone, created_at desc);
 
+alter table public.leads enable row level security;
+drop policy if exists "leads can be created by public form" on public.leads;
+create policy "leads can be created by public form"
+  on public.leads for insert
+  with check (true);
+
 create table if not exists public.visitor_sessions (
   id text primary key,
   visitor_id text not null,
@@ -79,3 +85,10 @@ create index if not exists visitor_sessions_visitor_day_idx
 
 create index if not exists visitor_sessions_visitor_month_idx
   on public.visitor_sessions (visitor_id, visited_month);
+
+alter table public.visitor_sessions enable row level security;
+drop policy if exists "visitor sessions can be created by public form"
+  on public.visitor_sessions;
+create policy "visitor sessions can be created by public form"
+  on public.visitor_sessions for insert
+  with check (true);

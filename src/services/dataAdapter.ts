@@ -20,6 +20,7 @@ const BACKUP_KEY = "funnel_backup_snapshots_v1";
 export const LEAD_CREATED_EVENT = "funnel:lead-created";
 export const ANALYTICS_UPDATED_EVENT = "funnel:analytics-updated";
 const CLOUD_CONFIG_TABLE = "funnel_configs";
+const LOCAL_MIGRATION_KEY = "funnel_supabase_migrated_leads_v1";
 const REMOTE_LEAD_TIMEOUT_MS = 3_000;
 const REMOTE_DUPLICATE_TIMEOUT_MS = 1_500;
 
@@ -121,7 +122,7 @@ export async function loadCloudConfig(
     if (!Array.isArray(rows) || !isRecord(rows[0])) return null;
     const data = rows[0]["data"];
     return isRecord(data)
-      ? mergeConfig(DEFAULT_CONFIG, data as Partial<SiteConfig>)
+      ? mergeConfig(config, data as Partial<SiteConfig>)
       : null;
   } catch {
     return null;
@@ -656,6 +657,8 @@ export function clearAnalytics(): void {
 async function syncConfigToSupabase(config: SiteConfig): Promise<void> {
   try {
     const { supabaseUrl, supabaseAnonKey } = config.admin;
+    const cloudConfig = structuredClone(config);
+    cloudConfig.admin.supabaseAnonKey = "";
     const response = await fetch(
       `${supabaseUrl.replace(/\/$/, "")}/rest/v1/${CLOUD_CONFIG_TABLE}?on_conflict=id`,
       {
@@ -667,7 +670,7 @@ async function syncConfigToSupabase(config: SiteConfig): Promise<void> {
           Authorization: `Bearer ${supabaseAnonKey}`,
         },
         body: JSON.stringify([
-          { id: 1, data: config, updated_at: new Date().toISOString() },
+          { id: 1, data: cloudConfig, updated_at: new Date().toISOString() },
         ]),
       },
     );
@@ -677,6 +680,99 @@ async function syncConfigToSupabase(config: SiteConfig): Promise<void> {
   } catch (err) {
     console.warn("Supabase config sync failed:", (err as Error).message);
   }
+}
+
+export interface LocalMigrationResult {
+  configSynced: boolean;
+  leadsFound: number;
+  leadsUploaded: number;
+  leadsSkipped: number;
+  leadsFailed: number;
+}
+
+/** Đẩy config và các lead LocalStorage lên Supabase, không xóa dữ liệu local. */
+export async function migrateLocalDataToSupabase(
+  config: SiteConfig,
+): Promise<LocalMigrationResult> {
+  const result: LocalMigrationResult = {
+    configSynced: false,
+    leadsFound: 0,
+    leadsUploaded: 0,
+    leadsSkipped: 0,
+    leadsFailed: 0,
+  };
+  if (
+    !isBrowser() ||
+    config.admin.storageMode !== "database" ||
+    !config.admin.supabaseUrl ||
+    !config.admin.supabaseAnonKey
+  ) {
+    return result;
+  }
+
+  const configResponse = await fetch(
+    `${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/${CLOUD_CONFIG_TABLE}?on_conflict=id`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal",
+        apikey: config.admin.supabaseAnonKey,
+        Authorization: `Bearer ${config.admin.supabaseAnonKey}`,
+      },
+      body: JSON.stringify([
+        {
+          id: 1,
+          data: (() => {
+            const cloudConfig = structuredClone(config);
+            cloudConfig.admin.supabaseAnonKey = "";
+            return cloudConfig;
+          })(),
+          updated_at: new Date().toISOString(),
+        },
+      ]),
+    },
+  );
+  result.configSynced = configResponse.ok;
+
+  const migrated = new Set<string>();
+  try {
+    const raw = window.localStorage.getItem(LOCAL_MIGRATION_KEY);
+    for (const id of raw ? (JSON.parse(raw) as unknown[]) : []) {
+      if (typeof id === "string") migrated.add(id);
+    }
+  } catch {
+    /* ignore malformed migration marker */
+  }
+
+  const leads = loadLeads();
+  result.leadsFound = leads.length;
+  for (const lead of leads) {
+    if (migrated.has(lead.id)) {
+      result.leadsSkipped += 1;
+      continue;
+    }
+    const ok = await pushLeadToSupabase(
+      lead,
+      config.admin.supabaseUrl,
+      config.admin.supabaseAnonKey,
+    );
+    if (ok) {
+      migrated.add(lead.id);
+      result.leadsUploaded += 1;
+    } else {
+      result.leadsFailed += 1;
+    }
+  }
+  try {
+    window.localStorage.setItem(
+      LOCAL_MIGRATION_KEY,
+      JSON.stringify([...migrated].slice(-1000)),
+    );
+  } catch {
+    /* ignore storage quota */
+  }
+  return result;
 }
 
 export type SupabaseConnectionStatus =

@@ -8,14 +8,17 @@ alter table public.funnel_configs enable row level security;
 
 -- The anon key is used by the current client-side storage adapter.
 -- Restrict this policy further when Supabase Auth is enabled.
+drop policy if exists "funnel configs can be read" on public.funnel_configs;
 create policy "funnel configs can be read"
   on public.funnel_configs for select
   using (true);
 
+drop policy if exists "funnel configs can be written" on public.funnel_configs;
 create policy "funnel configs can be written"
   on public.funnel_configs for insert
   with check (id = 1);
 
+drop policy if exists "funnel configs can be updated" on public.funnel_configs;
 create policy "funnel configs can be updated"
   on public.funnel_configs for update
   using (id = 1)
