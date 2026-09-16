@@ -595,31 +595,35 @@ async function fetchRemoteSessionCounts(
 
   try {
     if (isNewSession) {
-      await fetch(`${base}/rest/v1/${VISITOR_SESSION_TABLE}`, {
-        method: "POST",
-        headers: {
-          ...headers,
-          Prefer: "resolution=ignore-duplicates,return=minimal",
-        },
-        signal: controller.signal,
-        body: JSON.stringify([
-          {
-            id: sessionId,
-            visitor_id: visitorId,
-            visited_day: dayKey(),
-            visited_month: monthKey(),
-            source: attribution.source || null,
-            medium: attribution.medium || null,
-            campaign: attribution.campaign || null,
-            content: attribution.content || null,
-            device_model: device.model,
-            device_kind: device.kind,
-            os: device.os,
-            browser: device.browser,
-            created_at: new Date().toISOString(),
+      const sessionResponse = await fetch(
+        `${base}/rest/v1/${VISITOR_SESSION_TABLE}`,
+        {
+          method: "POST",
+          headers: {
+            ...headers,
+            Prefer: "resolution=ignore-duplicates,return=minimal",
           },
-        ]),
-      });
+          signal: controller.signal,
+          body: JSON.stringify([
+            {
+              id: sessionId,
+              visitor_id: visitorId,
+              visited_day: dayKey(),
+              visited_month: monthKey(),
+              source: attribution.source || null,
+              medium: attribution.medium || null,
+              campaign: attribution.campaign || null,
+              content: attribution.content || null,
+              device_model: device.model,
+              device_kind: device.kind,
+              os: device.os,
+              browser: device.browser,
+              created_at: new Date().toISOString(),
+            },
+          ]),
+        },
+      );
+      if (!sessionResponse.ok && sessionResponse.status !== 409) return;
     }
 
     const [todayResponse, monthResponse] = await Promise.all([
@@ -654,6 +658,21 @@ async function fetchRemoteSessionCounts(
   } finally {
     window.clearTimeout(timer);
   }
+}
+
+/** Đảm bảo phiên hiện tại được ghi khi người dùng submit, kể cả hydration trễ. */
+export function syncCurrentVisitorSession(
+  options: VisitorTrackingInitOptions,
+): void {
+  if (!runtime.initialized) return;
+  void fetchRemoteSessionCounts(
+    options,
+    runtime.visitorId,
+    runtime.sessionId,
+    true,
+    runtime.attribution,
+    runtime.device,
+  );
 }
 
 async function refreshNetworkInfo() {

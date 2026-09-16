@@ -7,6 +7,7 @@ import {
   markCopyPaste,
   markFormStart,
   markIndustrySwitch,
+  syncBehaviorSession,
 } from "@/lib/behavior";
 import { getVariant, utmSource } from "@/lib/ab";
 import { getUtmPayload } from "@/lib/utm-hub";
@@ -246,6 +247,11 @@ export function LeadForm({ id = "dang-ky" }: { id?: string }) {
 
     let leadSaved = false;
     try {
+      syncBehaviorSession({
+        storageMode: config.admin.storageMode,
+        supabaseUrl: config.admin.supabaseUrl,
+        supabaseAnonKey: config.admin.supabaseAnonKey,
+      });
       const sessionSource = utmSource();
       // Hub UTM: dữ liệu attribution sạch, luôn an toàn (không throw)
       const utmData = getUtmPayload("last");

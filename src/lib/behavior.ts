@@ -16,6 +16,7 @@ import {
   markFaqClick,
   markFormStart,
   markIndustrySwitch,
+  syncCurrentVisitorSession,
   type VisitorTrackingInitOptions,
 } from "@/lib/visitor-tracking";
 
@@ -30,6 +31,10 @@ export {
 
 export function initBehavior(options: VisitorTrackingInitOptions = {}) {
   return initVisitorTracking(options);
+}
+
+export function syncBehaviorSession(options: VisitorTrackingInitOptions) {
+  syncCurrentVisitorSession(options);
 }
 
 function scoreLead(
@@ -166,8 +171,10 @@ function scoreLead(
   };
 }
 
-const VIP_DEVICE_RE = /iPhone (12|13|14|15|16)|Galaxy S(22|23|24|25)|Fold|Flip|Pixel/i;
-const KEY_REGION_RE = /Nghệ An|Hà Tĩnh|Quảng Bình|Thanh Hóa|Quảng Ninh|Hải Phòng/i;
+const VIP_DEVICE_RE =
+  /iPhone (12|13|14|15|16)|Galaxy S(22|23|24|25)|Fold|Flip|Pixel/i;
+const KEY_REGION_RE =
+  /Nghệ An|Hà Tĩnh|Quảng Bình|Thanh Hóa|Quảng Ninh|Hải Phòng/i;
 
 /** Giờ Việt Nam (UTC+7) — dùng cho mọi nhánh thời gian bất kể múi giờ trình duyệt. */
 function vietnamHour(): number {
@@ -317,15 +324,17 @@ function generateBehaviorSummary(data: BehaviorData): string {
   parts.push(
     `[MOUSE] Mất ${data.time_to_first_interaction_seconds || 0} giây để bắt đầu tương tác`,
   );
-  parts.push(`[FORM] Điền form trong ${data.form_fill_duration_seconds || 0} giây`);
   parts.push(
-    `[SCROLL] Cuộn đọc ${data.scroll_depth_percent}% nội dung trang`,
+    `[FORM] Điền form trong ${data.form_fill_duration_seconds || 0} giây`,
   );
+  parts.push(`[SCROLL] Cuộn đọc ${data.scroll_depth_percent}% nội dung trang`);
   parts.push(
     `[VISIT] Lần truy cập thứ ${data.current_session} (hôm nay ${data.visits_today} lần, tháng này ${data.visits_month} lần)`,
   );
   if (data.industry_switch_count > 0)
-    parts.push(`[SWITCH] Đã đổi ngành xem ${data.industry_switch_count} lần trước khi chốt`);
+    parts.push(
+      `[SWITCH] Đã đổi ngành xem ${data.industry_switch_count} lần trước khi chốt`,
+    );
   if (data.focus_section) {
     const sectionLabels: Record<string, string> = {
       luong_thuc_tap: "phần lương thực tập",
@@ -346,11 +355,16 @@ function generateBehaviorSummary(data: BehaviorData): string {
     nganh_hoc: "chọn ngành",
   };
   if (data.faq_clicked)
-    parts.push(`Đọc câu hỏi thường gặp về ${faqLabels[data.faq_clicked] || data.faq_clicked}`);
+    parts.push(
+      `Đọc câu hỏi thường gặp về ${faqLabels[data.faq_clicked] || data.faq_clicked}`,
+    );
   if (data.is_copy_paste) parts.push("[COPY] Có copy/paste số điện thoại");
   if (data.scroll_back_count > 10)
-    parts.push(`[UPDOWN] Cuộn lên/xuống nhiều (${data.scroll_back_count} lần) — đang đọc kỹ`);
-  if (data.is_headless_browser) parts.push("[BOT] Phát hiện trình duyệt tự động (bot)");
+    parts.push(
+      `[UPDOWN] Cuộn lên/xuống nhiều (${data.scroll_back_count} lần) — đang đọc kỹ`,
+    );
+  if (data.is_headless_browser)
+    parts.push("[BOT] Phát hiện trình duyệt tự động (bot)");
   if (data.is_in_app_browser)
     parts.push("[APP] Mở trang trong app Facebook/TikTok/Zalo");
   return parts.join(". ");
@@ -369,7 +383,10 @@ function generateDeviceTechInfo(data: BehaviorData): string {
         : "Phần cứng không chia sẻ";
   const os = joinParts([data.operating_system, data.operating_system_version]);
   const browser = joinParts([data.browser, data.browser_version]);
-  const deviceName = joinParts([data.device_manufacturer, data.device_model_name]);
+  const deviceName = joinParts([
+    data.device_manufacturer,
+    data.device_model_name,
+  ]);
   return [
     deviceName || "Thiết bị chưa nhận diện",
     os || "Hệ điều hành chưa rõ",
@@ -414,10 +431,10 @@ export function generateTrafficAdsSource(
   const source = rawSource || (data.ttclid ? "TikTok" : "Direct");
   const hasCampaignData = Boolean(
     data.utm_medium ||
-      data.utm_campaign ||
-      data.utm_content ||
-      data.utm_term ||
-      data.ttclid,
+    data.utm_campaign ||
+    data.utm_content ||
+    data.utm_term ||
+    data.ttclid,
   );
 
   if (!hasCampaignData && source.toLowerCase() === "direct") {
