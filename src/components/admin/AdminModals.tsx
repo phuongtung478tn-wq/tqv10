@@ -2099,6 +2099,10 @@ function UtmModal({ onClose }: ModalProps) {
 function CronModal({ onClose }: ModalProps) {
   const { config, update } = useSiteConfig();
   const a = config.admin;
+  const [testingBackup, setTestingBackup] = useState(false);
+  const [backupTestMessage, setBackupTestMessage] = useState<string | null>(
+    null,
+  );
   const databaseReady = a.storageMode === "database" && Boolean(a.supabaseUrl);
   const scheduleReady =
     a.cronSchedule === "off" ||
@@ -2114,6 +2118,18 @@ function CronModal({ onClose }: ModalProps) {
           value={a.backupEmail}
           onChange={(e) =>
             update((d) => (d.admin.backupEmail = e.target.value))
+          }
+        />
+      </Field>
+      <Field
+        label="Token test backup"
+        hint="Phải trùng BACKUP_CRON_TOKEN trên Vercel; token chỉ lưu trên máy này."
+      >
+        <TextInput
+          type="password"
+          value={a.backupCronToken}
+          onChange={(e) =>
+            update((d) => (d.admin.backupCronToken = e.target.value))
           }
         />
       </Field>
@@ -2146,6 +2162,37 @@ function CronModal({ onClose }: ModalProps) {
           {scheduleReady
             ? "Đã có cấu hình lịch/email. Cần triển khai Supabase Edge Function hoặc API backup để lịch thực sự gửi email."
             : "Chưa đủ cấu hình: cần Database Mode, Supabase URL và email nhận backup hợp lệ."}
+        </p>
+      )}
+      <button
+        type="button"
+        disabled={testingBackup || !a.backupCronToken}
+        onClick={async () => {
+          setTestingBackup(true);
+          setBackupTestMessage(null);
+          try {
+            const response = await fetch("/api/backup?test=1", {
+              headers: { "x-backup-token": a.backupCronToken },
+            });
+            const detail = await response.text();
+            setBackupTestMessage(`${response.status}: ${detail}`);
+          } catch (error) {
+            setBackupTestMessage(
+              error instanceof Error
+                ? error.message
+                : "Không gọi được endpoint backup.",
+            );
+          } finally {
+            setTestingBackup(false);
+          }
+        }}
+        className="mb-3 rounded-lg border border-emerald-600 px-3 py-2 text-xs font-bold text-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {testingBackup ? "Đang gửi backup thử..." : "Gửi backup thử qua email"}
+      </button>
+      {backupTestMessage && (
+        <p className="mb-3 text-xs font-semibold text-neutral-700">
+          {backupTestMessage}
         </p>
       )}
       <SaveHint />

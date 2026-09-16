@@ -26,7 +26,9 @@ function isAuthorizedBackupRequest(request: Request) {
   const token = process.env["BACKUP_CRON_TOKEN"];
   return (
     request.headers.get("x-vercel-cron") === "1" ||
-    (Boolean(token) && new URL(request.url).searchParams.get("token") === token)
+    (Boolean(token) &&
+      new URL(request.url).searchParams.get("token") === token) ||
+    (Boolean(token) && request.headers.get("x-backup-token") === token)
   );
 }
 
@@ -45,9 +47,12 @@ async function handleBackupRequest(request: Request): Promise<Response> {
     !fromEmail && "BACKUP_FROM_EMAIL",
   ].filter((value): value is string => Boolean(value));
   if (missing.length > 0) {
-    return new Response(`Backup environment is incomplete: ${missing.join(", ")}`, {
-      status: 503,
-    });
+    return new Response(
+      `Backup environment is incomplete: ${missing.join(", ")}`,
+      {
+        status: 503,
+      },
+    );
   }
 
   const headers = {
@@ -97,7 +102,7 @@ async function handleBackupRequest(request: Request): Promise<Response> {
     body: JSON.stringify({
       from: fromEmail,
       to: [recipient],
-      subject: `[Backup] ${new Date().toISOString().slice(0, 10)}`,
+      subject: `[Backup${new URL(request.url).searchParams.get("test") === "1" ? " Test" : ""}] ${new Date().toISOString().slice(0, 10)}`,
       text: "Bản backup dữ liệu Supabase được đính kèm.",
       attachments: [
         {

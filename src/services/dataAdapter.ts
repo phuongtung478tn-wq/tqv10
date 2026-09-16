@@ -89,6 +89,7 @@ function preserveLocalSecrets(
   merged.admin.supabaseUrl = local.admin.supabaseUrl;
   merged.admin.supabaseAnonKey = local.admin.supabaseAnonKey;
   merged.admin.storageMode = local.admin.storageMode;
+  merged.admin.backupCronToken = local.admin.backupCronToken;
   merged.emailAutomation.resendApiKey = local.emailAutomation.resendApiKey;
   merged.emailAutomation.gmailClientId = local.emailAutomation.gmailClientId;
   merged.emailAutomation.gmailClientSecret =
@@ -755,6 +756,7 @@ async function syncConfigToSupabase(config: SiteConfig): Promise<void> {
     const { supabaseUrl, supabaseAnonKey } = config.admin;
     const cloudConfig = structuredClone(config);
     cloudConfig.admin.supabaseAnonKey = "";
+    cloudConfig.admin.backupCronToken = "";
     cloudConfig.emailAutomation.resendApiKey = "";
     cloudConfig.emailAutomation.gmailClientId = "";
     cloudConfig.emailAutomation.gmailClientSecret = "";
@@ -832,6 +834,7 @@ export async function migrateLocalDataToSupabase(
           data: (() => {
             const cloudConfig = structuredClone(config);
             cloudConfig.admin.supabaseAnonKey = "";
+            cloudConfig.admin.backupCronToken = "";
             cloudConfig.emailAutomation.resendApiKey = "";
             cloudConfig.emailAutomation.gmailClientId = "";
             cloudConfig.emailAutomation.gmailClientSecret = "";

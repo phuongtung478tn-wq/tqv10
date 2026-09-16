@@ -18,6 +18,7 @@ export interface AdminConfig {
   supabaseAnonKey: string;
   backupEmail: string;
   cronSchedule: string; // "daily" | "weekly" | "off"
+  backupCronToken: string;
 }
 
 export interface SitePage {
@@ -273,6 +274,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
     supabaseAnonKey: "",
     backupEmail: "",
     cronSchedule: "off",
+    backupCronToken: "",
   },
   pages: [
     {
@@ -747,7 +749,8 @@ export const DEFAULT_CONFIG: SiteConfig = {
     subject: "Cảm ơn {name} đã đăng ký tư vấn du học nghề Trung Quốc",
     body: "Chào {name},\n\nCảm ơn bạn đã để lại thông tin. Đội ngũ tư vấn sẽ liên hệ số {phone} trong thời gian sớm nhất.\n\nTrân trọng.",
     notifySubject: "[Lead mới] {name} — {phone} — {city}",
-    notifyBody: "Lead mới vừa đăng ký:\n\nHọ tên: {name}\nSĐT: {phone}\nTỉnh: {city}\nNgành: {major}\nAI Score: {ai_score}\nNguồn: {source}",
+    notifyBody:
+      "Lead mới vừa đăng ký:\n\nHọ tên: {name}\nSĐT: {phone}\nTỉnh: {city}\nNgành: {major}\nAI Score: {ai_score}\nNguồn: {source}",
   },
   abTest: {
     enabled: false,
