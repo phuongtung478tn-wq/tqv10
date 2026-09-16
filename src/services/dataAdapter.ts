@@ -82,6 +82,23 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
+function preserveLocalSecrets(
+  merged: SiteConfig,
+  local: SiteConfig,
+): SiteConfig {
+  merged.admin.supabaseUrl = local.admin.supabaseUrl;
+  merged.admin.supabaseAnonKey = local.admin.supabaseAnonKey;
+  merged.admin.storageMode = local.admin.storageMode;
+  merged.emailAutomation.resendApiKey = local.emailAutomation.resendApiKey;
+  merged.emailAutomation.gmailClientId = local.emailAutomation.gmailClientId;
+  merged.emailAutomation.gmailClientSecret =
+    local.emailAutomation.gmailClientSecret;
+  merged.emailAutomation.gmailRefreshToken =
+    local.emailAutomation.gmailRefreshToken;
+  merged.tracking.tiktokAccessToken = local.tracking.tiktokAccessToken;
+  return merged;
+}
+
 export function loadConfig(): SiteConfig {
   if (!isBrowser()) return structuredClone(DEFAULT_CONFIG);
   try {
@@ -123,12 +140,11 @@ export async function loadCloudConfig(
     if (!Array.isArray(rows) || !isRecord(rows[0])) return null;
     const data = rows[0]["data"];
     if (!isRecord(data)) return null;
-    const merged = mergeConfig(config, data as Partial<SiteConfig>);
     // Credential không được lưu cloud, nên luôn giữ bản local khi hydrate.
-    merged.admin.supabaseUrl = config.admin.supabaseUrl;
-    merged.admin.supabaseAnonKey = config.admin.supabaseAnonKey;
-    merged.admin.storageMode = config.admin.storageMode;
-    return merged;
+    return preserveLocalSecrets(
+      mergeConfig(config, data as Partial<SiteConfig>),
+      config,
+    );
   } catch {
     return null;
   }
@@ -739,6 +755,11 @@ async function syncConfigToSupabase(config: SiteConfig): Promise<void> {
     const { supabaseUrl, supabaseAnonKey } = config.admin;
     const cloudConfig = structuredClone(config);
     cloudConfig.admin.supabaseAnonKey = "";
+    cloudConfig.emailAutomation.resendApiKey = "";
+    cloudConfig.emailAutomation.gmailClientId = "";
+    cloudConfig.emailAutomation.gmailClientSecret = "";
+    cloudConfig.emailAutomation.gmailRefreshToken = "";
+    cloudConfig.tracking.tiktokAccessToken = "";
     const response = await fetch(
       `${supabaseUrl.replace(/\/$/, "")}/rest/v1/${CLOUD_CONFIG_TABLE}?on_conflict=id`,
       {
@@ -811,6 +832,11 @@ export async function migrateLocalDataToSupabase(
           data: (() => {
             const cloudConfig = structuredClone(config);
             cloudConfig.admin.supabaseAnonKey = "";
+            cloudConfig.emailAutomation.resendApiKey = "";
+            cloudConfig.emailAutomation.gmailClientId = "";
+            cloudConfig.emailAutomation.gmailClientSecret = "";
+            cloudConfig.emailAutomation.gmailRefreshToken = "";
+            cloudConfig.tracking.tiktokAccessToken = "";
             return cloudConfig;
           })(),
           updated_at: new Date().toISOString(),
