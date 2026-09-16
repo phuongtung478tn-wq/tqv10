@@ -20,6 +20,7 @@ const BACKUP_KEY = "funnel_backup_snapshots_v1";
 export const LEAD_CREATED_EVENT = "funnel:lead-created";
 export const ANALYTICS_UPDATED_EVENT = "funnel:analytics-updated";
 const CLOUD_CONFIG_TABLE = "funnel_configs";
+const CLOUD_ANALYTICS_TABLE = "funnel_analytics";
 const LOCAL_MIGRATION_KEY = "funnel_supabase_migrated_leads_v1";
 const REMOTE_LEAD_TIMEOUT_MS = 3_000;
 const REMOTE_DUPLICATE_TIMEOUT_MS = 1_500;
@@ -605,6 +606,70 @@ function saveAnalytics(state: AnalyticsState): void {
   window.dispatchEvent(
     new CustomEvent<AnalyticsState>(ANALYTICS_UPDATED_EVENT, { detail: state }),
   );
+  const config = loadConfig();
+  if (
+    config.admin.storageMode === "database" &&
+    config.admin.supabaseUrl &&
+    config.admin.supabaseAnonKey
+  ) {
+    void syncAnalyticsToSupabase(state, config);
+  }
+}
+
+async function syncAnalyticsToSupabase(
+  state: AnalyticsState,
+  config: SiteConfig,
+): Promise<boolean> {
+  try {
+    const response = await fetch(
+      `${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/${CLOUD_ANALYTICS_TABLE}?on_conflict=id`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Prefer: "resolution=merge-duplicates,return=minimal",
+          apikey: config.admin.supabaseAnonKey,
+          Authorization: `Bearer ${config.admin.supabaseAnonKey}`,
+        },
+        body: JSON.stringify([
+          { id: 1, data: state, updated_at: new Date().toISOString() },
+        ]),
+      },
+    );
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function loadCloudAnalytics(
+  config: SiteConfig,
+): Promise<AnalyticsState | null> {
+  if (
+    !isBrowser() ||
+    config.admin.storageMode !== "database" ||
+    !config.admin.supabaseUrl ||
+    !config.admin.supabaseAnonKey
+  ) {
+    return null;
+  }
+  try {
+    const response = await fetch(
+      `${config.admin.supabaseUrl.replace(/\/$/, "")}/rest/v1/${CLOUD_ANALYTICS_TABLE}?id=eq.1&select=data`,
+      {
+        headers: {
+          apikey: config.admin.supabaseAnonKey,
+          Authorization: `Bearer ${config.admin.supabaseAnonKey}`,
+        },
+      },
+    );
+    if (!response.ok) return null;
+    const rows = (await response.json()) as unknown;
+    if (!Array.isArray(rows) || !isRecord(rows[0])) return null;
+    return normalizeAnalytics(rows[0].data as Partial<AnalyticsState>);
+  } catch {
+    return null;
+  }
 }
 
 export function trackVisit(source: string, variant?: string): void {
@@ -684,6 +749,7 @@ async function syncConfigToSupabase(config: SiteConfig): Promise<void> {
 
 export interface LocalMigrationResult {
   configSynced: boolean;
+  analyticsSynced: boolean;
   leadsFound: number;
   leadsUploaded: number;
   leadsSkipped: number;
@@ -696,6 +762,7 @@ export async function migrateLocalDataToSupabase(
 ): Promise<LocalMigrationResult> {
   const result: LocalMigrationResult = {
     configSynced: false,
+    analyticsSynced: false,
     leadsFound: 0,
     leadsUploaded: 0,
     leadsSkipped: 0,
@@ -734,6 +801,10 @@ export async function migrateLocalDataToSupabase(
     },
   );
   result.configSynced = configResponse.ok;
+  result.analyticsSynced = await syncAnalyticsToSupabase(
+    loadAnalytics(),
+    config,
+  );
 
   const migrated = new Set<string>();
   try {

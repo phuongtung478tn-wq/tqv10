@@ -13,6 +13,7 @@ import {
   LEAD_CREATED_EVENT,
   exportLeadsCsv,
   loadAnalytics,
+  loadCloudAnalytics,
   loadLeads,
   migrateLocalDataToSupabase,
   saveLead,
@@ -1312,19 +1313,27 @@ function WebhookModal({ onClose }: ModalProps) {
 
 /* ------------------------------ ANALYTICS --------------------------------- */
 function AnalyticsModal({ onClose }: ModalProps) {
+  const { config } = useSiteConfig();
   const [a, setA] = useState<AnalyticsState | null>(null);
   useEffect(() => {
     const refresh = () => setA(loadAnalytics());
     refresh();
+    void loadCloudAnalytics(config).then((cloud) => {
+      if (cloud) setA(cloud);
+    });
     window.addEventListener(ANALYTICS_UPDATED_EVENT, refresh);
     return () => window.removeEventListener(ANALYTICS_UPDATED_EVENT, refresh);
-  }, []);
+  }, [config]);
   const cr =
     a && a.visits > 0 ? ((a.leads / a.visits) * 100).toFixed(1) : "0.0";
   return (
     <AdminModal
       title="Thống Kê & Analytics"
-      subtitle="Số liệu thời gian thực (local)"
+      subtitle={
+        config.admin.storageMode === "database"
+          ? "Số liệu Analytics từ Supabase"
+          : "Số liệu thời gian thực (local)"
+      }
       onClose={onClose}
     >
       <div className="mb-3 flex justify-end">
@@ -1685,7 +1694,7 @@ function StorageModal({ onClose }: ModalProps) {
               try {
                 const result = await migrateLocalDataToSupabase(config);
                 setMigration(
-                  `Đã đồng bộ config: ${result.configSynced ? "có" : "chưa"}; lead tải lên: ${result.leadsUploaded}; đã có trên cloud: ${result.leadsSkipped}; lỗi: ${result.leadsFailed}. Dữ liệu LocalStorage vẫn được giữ lại.`,
+                  `Config: ${result.configSynced ? "đã đồng bộ" : "lỗi"}; Analytics: ${result.analyticsSynced ? "đã đồng bộ" : "lỗi"}; lead tải lên: ${result.leadsUploaded}; đã có trên cloud: ${result.leadsSkipped}; lỗi: ${result.leadsFailed}. Dữ liệu LocalStorage vẫn được giữ lại.`,
                 );
               } catch {
                 setMigration(
