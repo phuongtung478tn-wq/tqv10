@@ -38,8 +38,16 @@ async function handleBackupRequest(request: Request): Promise<Response> {
   const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
   const resendKey = process.env["RESEND_API_KEY"];
   const fromEmail = process.env["BACKUP_FROM_EMAIL"];
-  if (!supabaseUrl || !serviceKey || !resendKey || !fromEmail) {
-    return new Response("Backup environment is incomplete", { status: 503 });
+  const missing = [
+    !supabaseUrl && "SUPABASE_URL",
+    !serviceKey && "SUPABASE_SERVICE_ROLE_KEY",
+    !resendKey && "RESEND_API_KEY",
+    !fromEmail && "BACKUP_FROM_EMAIL",
+  ].filter((value): value is string => Boolean(value));
+  if (missing.length > 0) {
+    return new Response(`Backup environment is incomplete: ${missing.join(", ")}`, {
+      status: 503,
+    });
   }
 
   const headers = {
