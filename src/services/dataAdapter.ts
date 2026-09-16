@@ -20,6 +20,7 @@ const BACKUP_KEY = "funnel_backup_snapshots_v1";
 export const LEAD_CREATED_EVENT = "funnel:lead-created";
 export const ANALYTICS_UPDATED_EVENT = "funnel:analytics-updated";
 const CLOUD_CONFIG_TABLE = "funnel_configs";
+const REMOTE_LEAD_TIMEOUT_MS = 3_000;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -359,65 +360,93 @@ async function pushLeadToSupabase(
   url: string,
   key: string,
 ): Promise<boolean> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(
+    () => controller.abort(),
+    REMOTE_LEAD_TIMEOUT_MS,
+  );
   try {
-    const res = await fetch(`${url.replace(/\/$/, "")}/rest/v1/leads`, {
+    const endpoint = `${url.replace(/\/$/, "")}/rest/v1/leads`;
+    const headers = {
+      "Content-Type": "application/json",
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      Prefer: "return=minimal",
+    };
+    const row = {
+      name: lead.name,
+      phone: lead.phone,
+      email: lead.email ?? null,
+      city: lead.city ?? null,
+      major: lead.major ?? null,
+      ai_score: lead.aiScore ?? null,
+      ai_rank: lead.aiRank ?? null,
+      risk_level: lead.riskLevel ?? null,
+      risk_reasons: lead.riskReasons ?? null,
+      recommended_action: lead.recommendedAction ?? null,
+      behavior_summary: lead.behaviorSummary ?? null,
+      sale_advice: lead.saleAdvice ?? null,
+      device_tech_info: lead.deviceTechInfo ?? null,
+      traffic_ads_source: lead.trafficAdsSource ?? null,
+      network_provider: lead.networkProvider ?? null,
+      network_label: lead.networkLabel ?? null,
+      current_session: lead.currentSession ?? null,
+      visits_today: lead.visitsToday ?? null,
+      visits_month: lead.visitsMonth ?? null,
+      utm_source: lead.utmSource ?? null,
+      utm_medium: lead.utmMedium ?? null,
+      utm_campaign: lead.utmCampaign ?? null,
+      utm_content: lead.utmContent ?? null,
+      utm_term: lead.utmTerm ?? null,
+      fbclid: lead.fbclid ?? null,
+      ttclid: lead.ttclid ?? null,
+      gclid: lead.gclid ?? null,
+      raw_query: lead.rawQuery ?? null,
+      referrer: lead.referrer ?? null,
+      attribution_model: lead.attributionModel ?? null,
+      attribution_detected_by: lead.attributionDetectedBy ?? null,
+      utm_params: lead.utmParams ?? null,
+      variant: lead.variant ?? null,
+      landing_url: lead.landing_url ?? null,
+      device_manufacturer: lead.deviceManufacturer ?? null,
+      device_family: lead.deviceFamily ?? null,
+      device_model: lead.deviceModel ?? null,
+      operating_system: lead.operatingSystem ?? null,
+      browser: lead.browser ?? null,
+      visitor_behavior_payload: lead.visitorBehaviorPayload ?? null,
+      created_at: lead.at,
+    };
+    const res = await fetch(endpoint, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        Prefer: "return=minimal",
-      },
+      headers,
       keepalive: true,
-      body: JSON.stringify([
-        {
-          name: lead.name,
-          phone: lead.phone,
-          email: lead.email ?? null,
-          city: lead.city ?? null,
-          major: lead.major ?? null,
-          ai_score: lead.aiScore ?? null,
-          ai_rank: lead.aiRank ?? null,
-          risk_level: lead.riskLevel ?? null,
-          risk_reasons: lead.riskReasons ?? null,
-          recommended_action: lead.recommendedAction ?? null,
-          behavior_summary: lead.behaviorSummary ?? null,
-          sale_advice: lead.saleAdvice ?? null,
-          device_tech_info: lead.deviceTechInfo ?? null,
-          traffic_ads_source: lead.trafficAdsSource ?? null,
-          network_provider: lead.networkProvider ?? null,
-          network_label: lead.networkLabel ?? null,
-          current_session: lead.currentSession ?? null,
-          visits_today: lead.visitsToday ?? null,
-          visits_month: lead.visitsMonth ?? null,
-          utm_source: lead.utmSource ?? null,
-          utm_medium: lead.utmMedium ?? null,
-          utm_campaign: lead.utmCampaign ?? null,
-          utm_content: lead.utmContent ?? null,
-          utm_term: lead.utmTerm ?? null,
-          fbclid: lead.fbclid ?? null,
-          ttclid: lead.ttclid ?? null,
-          gclid: lead.gclid ?? null,
-          raw_query: lead.rawQuery ?? null,
-          referrer: lead.referrer ?? null,
-          attribution_model: lead.attributionModel ?? null,
-          attribution_detected_by: lead.attributionDetectedBy ?? null,
-          utm_params: lead.utmParams ?? null,
-          variant: lead.variant ?? null,
-          landing_url: lead.landing_url ?? null,
-          device_manufacturer: lead.deviceManufacturer ?? null,
-          device_family: lead.deviceFamily ?? null,
-          device_model: lead.deviceModel ?? null,
-          operating_system: lead.operatingSystem ?? null,
-          browser: lead.browser ?? null,
-          visitor_behavior_payload: lead.visitorBehaviorPayload ?? null,
-          created_at: lead.at,
-        },
-      ]),
+      signal: controller.signal,
+      body: JSON.stringify([row]),
     });
+    if (!res.ok && res.status >= 400 && res.status < 500) {
+      const legacy = { ...row };
+      delete legacy.utm_term;
+      delete legacy.fbclid;
+      delete legacy.gclid;
+      delete legacy.raw_query;
+      delete legacy.referrer;
+      delete legacy.attribution_model;
+      delete legacy.attribution_detected_by;
+      delete legacy.utm_params;
+      const fallback = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        keepalive: true,
+        signal: controller.signal,
+        body: JSON.stringify([legacy]),
+      });
+      return fallback.ok;
+    }
     return res.ok;
   } catch {
     return false;
+  } finally {
+    window.clearTimeout(timer);
   }
 }
 

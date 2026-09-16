@@ -14,6 +14,7 @@ export interface WebhookResult {
 
 const TIMEOUT_MS = 4_000;
 const RETRIES = 1;
+const MAX_PAYLOAD_BYTES = 60_000;
 
 function validUrl(value: string): boolean {
   try {
@@ -22,6 +23,16 @@ function validUrl(value: string): boolean {
   } catch {
     return false;
   }
+}
+
+function compactPayload(payload: Record<string, unknown>) {
+  const serialized = JSON.stringify(payload);
+  if (new TextEncoder().encode(serialized).byteLength <= MAX_PAYLOAD_BYTES) {
+    return payload;
+  }
+  const compact = { ...payload };
+  delete compact.visitor_behavior_payload;
+  return compact;
 }
 
 export function webhookConfigurationWarning(
@@ -182,6 +193,7 @@ export async function dispatchLead(
   config: SiteConfig,
   payload: Record<string, unknown>,
 ): Promise<{ ok: boolean; results: WebhookResult[]; failedCount?: number }> {
+  payload = compactPayload(payload);
   const endpoints: WebhookEndpoint[] = [];
 
   const primary = config.form.webhookUrl?.trim();
